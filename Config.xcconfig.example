@@ -1,0 +1,2 @@
+// Скопируйте этот файл в Config.xcconfig и подставьте свой ключ с themoviedb.org
+TMDB_API_KEY = YOUR_API_KEY_HERE
