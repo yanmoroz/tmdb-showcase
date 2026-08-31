@@ -7,14 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A30B12A6304461BA00A483EC /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = A30B12A5304461BA00A483EC /* Config.xcconfig */; };
+		A3D34DCE3045CEBF007A2DBC /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = A3D34DCD3045CEBF007A2DBC /* Config.xcconfig */; };
 		A3E3431C3044544A00006035 /* DataKit in Frameworks */ = {isa = PBXBuildFile; productRef = A3E3431B3044544A00006035 /* DataKit */; };
 		A3E3431E3044544A00006035 /* DomainKit in Frameworks */ = {isa = PBXBuildFile; productRef = A3E3431D3044544A00006035 /* DomainKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A30B12A5304461BA00A483EC /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		A37C94DE304452DB0091E1A7 /* MVC-App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MVC-App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A3D34DCD3045CEBF007A2DBC /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Config.xcconfig; path = ../Config.xcconfig; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -57,7 +57,7 @@
 				A37C94E0304452DB0091E1A7 /* MVC-App */,
 				A3E3431A3044544A00006035 /* Frameworks */,
 				A37C94DF304452DB0091E1A7 /* Products */,
-				A30B12A5304461BA00A483EC /* Config.xcconfig */,
+				A3D34DCD3045CEBF007A2DBC /* Config.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -142,7 +142,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A30B12A6304461BA00A483EC /* Config.xcconfig in Resources */,
+				A3D34DCE3045CEBF007A2DBC /* Config.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -186,7 +186,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -218,14 +218,14 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
 		A37C94F4304452DC0091E1A7 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A30B12A5304461BA00A483EC /* Config.xcconfig */;
+			baseConfigurationReference = A3D34DCD3045CEBF007A2DBC /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -277,7 +277,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -290,7 +290,7 @@
 		};
 		A37C94F5304452DC0091E1A7 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A30B12A5304461BA00A483EC /* Config.xcconfig */;
+			baseConfigurationReference = A3D34DCD3045CEBF007A2DBC /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -336,7 +336,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;

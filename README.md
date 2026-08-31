@@ -72,7 +72,7 @@ Domain и Data слои общие для всех 6 модулей. Presentatio
 
 ## Стек
 
-- Swift, iOS 16+
+- Swift 6 language mode, iOS 17+ (минимум для SwiftData)
 - SPM
 - TMDB REST API
 - CI: GitLab CI / Fastlane (планируется)

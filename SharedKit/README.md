@@ -8,7 +8,7 @@
 | `DataKit`             | DTO, TMDB API-клиент, реализации репозиториев, маппинг ошибок      | 🚧 не начат   |
 | `DomainKitTestSupport`| Фикстуры и стабы домена для тестов всех шести `-App`               | ✅            |
 
-Swift 6 language mode, iOS 16+. `DomainKit` не импортирует ничего, кроме `Foundation`.
+Swift 6 language mode, iOS 17+. `DomainKit` не импортирует ничего, кроме `Foundation`.
 
 ## Границы слоёв
 

@@ -6,7 +6,10 @@ import PackageDescription
 let package = Package(
     name: "SharedKit",
     platforms: [
-        .iOS(.v16)
+        .iOS(.v17),
+        // Not a supported product platform: SwiftData needs macOS 14+ to
+        // compile, and `swift test` builds for the host.
+        .macOS(.v14)
     ],
     products: [
         .library(
