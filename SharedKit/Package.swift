@@ -17,6 +17,12 @@ let package = Package(
             name: "DataKit",
             targets: ["DataKit"]
         ),
+        // Domain stubs and fixtures: a separate product so the test targets of
+        // the six -App projects do not rewrite the same mocks.
+        .library(
+            name: "DomainKitTestSupport",
+            targets: ["DomainKitTestSupport"]
+        ),
     ],
     targets: [
         .target(
@@ -26,9 +32,13 @@ let package = Package(
             name: "DataKit",
             dependencies: ["DomainKit"]
         ),
+        .target(
+            name: "DomainKitTestSupport",
+            dependencies: ["DomainKit"]
+        ),
         .testTarget(
             name: "DomainKitTests",
-            dependencies: ["DomainKit"]
+            dependencies: ["DomainKit", "DomainKitTestSupport"]
         ),
         .testTarget(
             name: "DataKitTests",

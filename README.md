@@ -23,7 +23,7 @@
 
 ### Фичи
 
-**1. Discovery**
+**1. Movies**
 
 - Список популярных/трендовых фильмов с пагинацией
 - Поиск с debounce
@@ -33,11 +33,11 @@
 **2. Watchlist / Favorites**
 
 - Локальное хранение избранного
-- Отражение состояния "в избранном" на экране Discovery
+- Отражение состояния "в избранном" на экране Movies
 
 ### Навигация
 
-- Tab bar: Discovery / Watchlist
+- Tab bar: Movies / Watchlist
 - Push на Detail из обоих табов
 - Модальный экран сортировки/фильтров
 
@@ -56,7 +56,8 @@ TMDB-Showcase.xcworkspace
 ├── SharedKit/                      (локальный Swift Package)
 │   └── Sources/
 │       ├── DomainKit/              (Entities, UseCase-протоколы, Repository-протоколы, AppError)
-│       └── DataKit/                (DTO, TMDB API client, реализация Repository, маппинг ошибок)
+│       ├── DataKit/                (DTO, TMDB API client, реализация Repository, маппинг ошибок)
+│       └── DomainKitTestSupport/   (фикстуры и стабы домена для тестов -App проектов)
 ├── MVC-App/
 ├── MVP-App/
 ├── MVVM-App/
@@ -67,6 +68,8 @@ TMDB-Showcase.xcworkspace
 
 Domain и Data слои общие для всех 6 модулей. Presentation-слой (Presenter/ViewModel/Interactor/Reducer/Store) уникален для каждой архитектуры и находится в соответствующем `-App` проекте.
 
+Границы между слоями и договорённости, обязательные для всех шести реализаций, описаны в [SharedKit/README.md](SharedKit/README.md).
+
 ## Стек
 
 - Swift, iOS 16+
@@ -76,7 +79,7 @@ Domain и Data слои общие для всех 6 модулей. Presentatio
 
 ## Текущий статус
 
-Оформление структуры репозитория и SharedKit-пакета. Реализация начинается с MVC.
+`DomainKit` реализован для фичи Movies: сущности, `AppError`, протоколы репозиториев и use cases, фикстуры и стабы для тестов. Следующий шаг — `DataKit` (TMDB-клиент и реализации репозиториев), затем Presentation начиная с MVC.
 
 ## Настройка окружения
 
