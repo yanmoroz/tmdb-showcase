@@ -68,7 +68,7 @@ TMDB-Showcase.xcworkspace
 
 Domain и Data слои общие для всех 6 модулей. Presentation-слой (Presenter/ViewModel/Interactor/Reducer/Store) уникален для каждой архитектуры и находится в соответствующем `-App` проекте.
 
-Границы между слоями и договорённости, обязательные для всех шести реализаций, описаны в [SharedKit/README.md](SharedKit/README.md).
+Границы между слоями и договорённости, обязательные для всех шести реализаций, описаны в [SharedKit/README.md](SharedKit/README.md). Особенности конкретного модуля — в его README, например [MVC-App/README.md](MVC-App/README.md).
 
 ## Стек
 
