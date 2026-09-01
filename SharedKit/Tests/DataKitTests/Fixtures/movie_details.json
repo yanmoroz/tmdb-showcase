@@ -1,0 +1,26 @@
+{
+  "adult": false,
+  "backdrop_path": "/detail_backdrop.jpg",
+  "budget": 63000000,
+  "genres": [
+    { "id": 18, "name": "Drama" },
+    { "id": 53, "name": "Thriller" }
+  ],
+  "homepage": "https://www.foxmovies.com/movies/fight-club",
+  "id": 550,
+  "imdb_id": "tt0137523",
+  "original_language": "en",
+  "original_title": "Fight Club",
+  "overview": "A ticking-time-bomb insomniac and a slippery soap salesman.",
+  "popularity": 61.4,
+  "poster_path": "/detail_poster.jpg",
+  "release_date": "1999-10-15",
+  "revenue": 100853753,
+  "runtime": 139,
+  "status": "Released",
+  "tagline": "Mischief. Mayhem. Soap.",
+  "title": "Fight Club",
+  "video": false,
+  "vote_average": 8.44,
+  "vote_count": 27280
+}

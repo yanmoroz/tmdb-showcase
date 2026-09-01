@@ -5,7 +5,7 @@
 | Таргет                | Назначение                                                       | Статус       |
 | --------------------- | ---------------------------------------------------------------- | ------------ |
 | `DomainKit`           | Сущности, `AppError`, протоколы репозиториев и use cases          | ✅ фича Movies |
-| `DataKit`             | DTO, TMDB API-клиент, реализации репозиториев, маппинг ошибок      | 🚧 не начат   |
+| `DataKit`             | DTO, TMDB API-клиент, реализации репозиториев, маппинг ошибок      | ✅ фича Movies |
 | `DomainKitTestSupport`| Фикстуры и стабы домена для тестов всех шести `-App`               | ✅            |
 
 Swift 6 language mode, iOS 17+. `DomainKit` не импортирует ничего, кроме `Foundation`.
@@ -33,6 +33,8 @@ load(query: .search(text))
 
 `MoviesQuery.search` невозможно собрать из пробелов, так что компилятор не даст пропустить валидацию.
 
+**Токен приходит снаружи.** `DataKit` не читает `Bundle.main`: пакет собирается и в `swift test`, где хост-бандла нет. Приложение конструирует `TMDBConfiguration(accessToken:)` и передаёт в репозитории. Используется v4 Read Access Token в заголовке `Authorization: Bearer`, не v3 `api_key` в query.
+
 **Флаг «в избранном» не станет полем `Movie`.** Watchlist-состояние накладывается на `[Movie]` в Presentation по `Set<Movie.ID>` из будущего `WatchlistRepository`.
 
 ## Что где лежит
@@ -49,6 +51,20 @@ Sources/DomainKit/
 Use case — протокол с `callAsFunction` плюс struct-реализация. Presentation зависит от протокола (`any FetchMoviesUseCase`), поэтому в тестах презентеров и вьюмоделей подставляется стаб use case, а не фейковый репозиторий.
 
 `Movie` и `MovieDetails` — разные типы, а не один с опциональными полями: в объединённом типе `runtime: Int?` означал бы одновременно «ещё не загружено» и «неизвестно».
+
+```
+Sources/DataKit/
+├── Configuration/  TMDBConfiguration
+├── Networking/     TMDBAPIClient, TMDBEndpoint, TMDBStatusResponse
+├── DTOs/           PagedResponseDTO<Item>, MovieDTO, MovieDetailsDTO, GenreDTO
+├── Mapping/        AppError+Classification, MoviesQuery+Endpoint, TMDBDate
+├── Repositories/   TMDBMoviesRepository, TMDBGenresRepository
+└── Images/         TMDBImageURLBuilder
+```
+
+Наружу публичны только `TMDBConfiguration`, две реализации репозиториев и `TMDBImageURLBuilder`. DTO, клиент и эндпоинты — `internal`: шесть приложений не должны знать формат TMDB, в этом и смысл границы.
+
+Единственный `do/catch` пакета живёт в `TMDBAPIClient`; `AppError` рождается только там, через `init(httpStatusCode:body:)` и `init(transportError:)`. 403 разбирается по телу: пустое — гео-блокировка CDN, со `status_code` — отказ по токену. Иначе пользователю с битым токеном советовали бы включить VPN.
 
 ## Использование
 
@@ -73,4 +89,12 @@ swift build --package-path SharedKit
 swift test --package-path SharedKit
 ```
 
-Домен не ходит в сеть, поэтому тесты не требуют ни симулятора, ни API-ключа, ни VPN.
+Прогон по умолчанию герметичен: транспорт подменяется через `URLProtocol`, поэтому тесты не требуют ни симулятора, ни токена, ни VPN.
+
+Отдельно живёт контрактный ярус (`TMDBContractTests`) — пять запросов к настоящему TMDB. Фикстуры фиксируют вчерашний контракт и не заметят, если TMDB переименует поле или перестанет принимать строку `sort_by`; ловит это только живой запрос. Ярус включается наличием токена в окружении, иначе помечается skipped:
+
+```bash
+TMDB_ACCESS_TOKEN=$(grep TMDB_ACCESS_TOKEN Config.xcconfig | cut -d= -f2 | xargs) swift test --package-path SharedKit --filter TMDBContract
+```
+
+Из РФ/РБ для него нужен VPN — TMDB закрыт на уровне CDN.

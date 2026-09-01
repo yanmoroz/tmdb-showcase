@@ -7,14 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A3D34DCE3045CEBF007A2DBC /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = A3D34DCD3045CEBF007A2DBC /* Config.xcconfig */; };
 		A3E3431C3044544A00006035 /* DataKit in Frameworks */ = {isa = PBXBuildFile; productRef = A3E3431B3044544A00006035 /* DataKit */; };
 		A3E3431E3044544A00006035 /* DomainKit in Frameworks */ = {isa = PBXBuildFile; productRef = A3E3431D3044544A00006035 /* DomainKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A35D38C83046F29000068590 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Config.xcconfig; path = ../Config.xcconfig; sourceTree = SOURCE_ROOT; };
 		A37C94DE304452DB0091E1A7 /* MVC-App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MVC-App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		A3D34DCD3045CEBF007A2DBC /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Config.xcconfig; path = ../Config.xcconfig; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -57,7 +56,7 @@
 				A37C94E0304452DB0091E1A7 /* MVC-App */,
 				A3E3431A3044544A00006035 /* Frameworks */,
 				A37C94DF304452DB0091E1A7 /* Products */,
-				A3D34DCD3045CEBF007A2DBC /* Config.xcconfig */,
+				A35D38C83046F29000068590 /* Config.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -142,7 +141,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A3D34DCE3045CEBF007A2DBC /* Config.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -225,7 +223,7 @@
 		};
 		A37C94F4304452DC0091E1A7 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A3D34DCD3045CEBF007A2DBC /* Config.xcconfig */;
+			baseConfigurationReference = A35D38C83046F29000068590 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -290,7 +288,7 @@
 		};
 		A37C94F5304452DC0091E1A7 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A3D34DCD3045CEBF007A2DBC /* Config.xcconfig */;
+			baseConfigurationReference = A35D38C83046F29000068590 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;

@@ -45,7 +45,8 @@ let package = Package(
         ),
         .testTarget(
             name: "DataKitTests",
-            dependencies: ["DataKit"]
+            dependencies: ["DataKit", "DomainKit", "DomainKitTestSupport"],
+            resources: [.process("Fixtures")]
         ),
     ],
     swiftLanguageModes: [.v6]

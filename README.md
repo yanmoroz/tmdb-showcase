@@ -79,10 +79,10 @@ Domain и Data слои общие для всех 6 модулей. Presentatio
 
 ## Текущий статус
 
-`DomainKit` реализован для фичи Movies: сущности, `AppError`, протоколы репозиториев и use cases, фикстуры и стабы для тестов. Следующий шаг — `DataKit` (TMDB-клиент и реализации репозиториев), затем Presentation начиная с MVC.
+`DomainKit` и `DataKit` реализованы для фичи Movies: сущности, `AppError`, протоколы и их TMDB-реализации, классификация ошибок, сборщик URL картинок, фикстуры и стабы для тестов. Кеш (SwiftData) и Watchlist — отдельные шаги. Следующий шаг — Presentation, начиная с MVC.
 
 ## Настройка окружения
 
-1. Получить API-ключ на [themoviedb.org](https://www.themoviedb.org/signup)
-2. Скопировать `Config.xcconfig.example` → `Config.xcconfig` в папке нужного `-App` проекта, подставить ключ
+1. Зарегистрироваться на [themoviedb.org](https://www.themoviedb.org/signup) и взять **API Read Access Token** (v4, длинный JWT) в Settings → API. Короткий v3 API Key не подойдёт — запросы уходят с заголовком `Authorization: Bearer`
+2. Скопировать `Config.xcconfig.example` → `Config.xcconfig` **в корне репозитория**, подставить токен. Файл в `.gitignore`
 3. Пользователям из РФ/РБ — включить VPN для доступа к API
