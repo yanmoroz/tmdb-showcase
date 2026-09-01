@@ -61,7 +61,7 @@ let repository = MoviesRepositoryStub(
 let sut = MoviesPresenter(fetchMovies: FetchMovies(repository: repository))
 ```
 
-Стабы репозиториев и use cases — акторы с журналом вызовов (`moviesCalls`, `callCount`), фикстуры детерминированы: даты берутся от `Fixtures.referenceDate`, а не от текущего момента.
+Стабы репозиториев и use cases — акторы с журналом вызовов (`moviesCalls`), фикстуры детерминированы: даты берутся от `Fixtures.referenceDate`, а не от текущего момента.
 
 ## Проверка
 

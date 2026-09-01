@@ -12,7 +12,7 @@ struct FetchGenresTests {
         let genres = try await fetchGenres()
 
         #expect(genres == Genre.fixtures)
-        await #expect(repository.genresCallCount == 1)
+        await #expect(repository.genresCalls.count == 1)
     }
 
     @Test("Ошибка справочника пробрасывается")

@@ -5,8 +5,6 @@ import DomainKit
 public actor GenresRepositoryStub: GenresRepository {
     public private(set) var genresCalls: [GenresCall] = []
 
-    public var genresCallCount: Int { genresCalls.count }
-
     private var genresResult: Result<[Genre], AppError>
 
     public init(genresResult: Result<[Genre], AppError> = .success(Genre.fixtures)) {
