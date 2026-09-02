@@ -58,6 +58,33 @@ final class MoviesFilterViewControllerTests {
 
         // The sort section is static: a genre catalogue failure does not touch it.
         #expect(sut.testTableView.numberOfRows(inSection: 1) == MovieSortOption.allCases.count)
+        // And nothing covers it: the failure belongs to the genre section alone.
+        #expect(sut.currentUnavailableConfiguration == nil)
+    }
+
+    @Test("Sorting still works while the genre catalogue is down")
+    func failedCatalogueKeepsSortUsable() async throws {
+        let (sut, _, applied) = makeSUT(genres: .failure(.network(.offline)))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { sut.genreStatus != nil }
+
+        // The genre section collapses to one status row; sort is untouched.
+        #expect(sut.testTableView.numberOfRows(inSection: 0) == 1)
+        // "Usable" means reachable, not merely present in the data source.
+        #expect(sut.currentUnavailableConfiguration == nil)
+
+        sut.selectRow(at: IndexPath(row: 1, section: 1))
+        sut.tapBarButton(sut.navigationItem.rightBarButtonItem)
+
+        let reported = try #require(applied.value)
+        #expect(reported.sort == .ratingDescending)
+
+        // Nothing above suspends, so the status cell's button and its UIAction
+        // are still sitting in an outer autorelease pool when `deinit` runs its
+        // leak check. Yielding drains them; without it a deferred release reads
+        // as a retain cycle.
+        await drainPendingWork()
     }
 
     @Test("A failed catalogue offers retry, and retry refetches")
@@ -67,9 +94,9 @@ final class MoviesFilterViewControllerTests {
         sut.loadViewIfNeeded()
         // The stub records its call before the load task hops back to assign the
         // state, so waiting on the call can outrun the state it is a proxy for.
-        try await waitUntil { sut.currentUnavailableConfiguration?.button.title == "Retry" }
+        try await waitUntil { sut.genreStatus?.button.title == "Retry" }
 
-        let configuration = try #require(sut.currentUnavailableConfiguration)
+        let configuration = try #require(sut.genreStatus)
 
         autoreleasepool {
             configuration.buttonProperties.primaryAction?.performWithSender(
@@ -155,6 +182,17 @@ private extension MoviesFilterViewController {
         autoreleasepool {
             let cell = testTableView.dataSource?.tableView(testTableView, cellForRowAt: indexPath)
             return (cell?.contentConfiguration as? UIListContentConfiguration)?.text
+        }
+    }
+
+    /// The genre section's load state, now a cell rather than a screen overlay.
+    var genreStatus: UIContentUnavailableConfiguration? {
+        autoreleasepool {
+            let cell = testTableView.dataSource?.tableView(
+                testTableView,
+                cellForRowAt: IndexPath(row: 0, section: 0)
+            )
+            return cell?.contentConfiguration as? UIContentUnavailableConfiguration
         }
     }
 

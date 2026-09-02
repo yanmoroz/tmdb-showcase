@@ -41,10 +41,7 @@ final class MoviesFilterViewController: UIViewController {
 
     private var selection: MoviesFilter
     private var catalogue: Catalogue = .loaded([.any]) {
-        didSet {
-            setNeedsUpdateContentUnavailableConfiguration()
-            tableView.reloadData()
-        }
+        didSet { tableView.reloadData() }
     }
 
     private lazy var tableView = makeTableView()
@@ -114,13 +111,18 @@ final class MoviesFilterViewController: UIViewController {
         if case .loaded(let rows) = catalogue { rows } else { [] }
     }
 
-    // MARK: - Unavailable content
+    // MARK: - Genre section state
 
-    override func updateContentUnavailableConfiguration(
-        using state: UIContentUnavailableConfigurationState
-    ) {
-        contentUnavailableConfiguration = switch catalogue {
-        case .loading: UIContentUnavailableConfiguration.loading()
+    /// The genre section carries its own load state as a single row. A
+    /// controller-level `contentUnavailableConfiguration` would cover the whole
+    /// view, and sorting does not depend on the catalogue.
+    private var showsGenreStatusRow: Bool {
+        if case .loaded = catalogue { false } else { true }
+    }
+
+    private var genreStatusConfiguration: UIContentUnavailableConfiguration? {
+        switch catalogue {
+        case .loading: .loading()
         case .failed(let error): failureConfiguration(error)
         case .loaded: nil
         }
@@ -191,7 +193,7 @@ extension MoviesFilterViewController: UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch Section.allCases[section] {
-        case .genre: genreRows.count
+        case .genre: showsGenreStatusRow ? 1 : genreRows.count
         case .sort: MovieSortOption.allCases.count
         }
     }
@@ -205,6 +207,14 @@ extension MoviesFilterViewController: UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: Self.cellIdentifier, for: indexPath)
+
+        if Section.allCases[indexPath.section] == .genre, let status = genreStatusConfiguration {
+            cell.contentConfiguration = status
+            cell.accessoryType = .none
+            cell.selectionStyle = .none
+            return cell
+        }
+
         var content = cell.defaultContentConfiguration()
 
         switch Section.allCases[indexPath.section] {
@@ -220,6 +230,7 @@ extension MoviesFilterViewController: UITableViewDataSource {
         }
 
         cell.contentConfiguration = content
+        cell.selectionStyle = .default
         return cell
     }
 }
@@ -229,6 +240,7 @@ extension MoviesFilterViewController: UITableViewDataSource {
 extension MoviesFilterViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let section = Section.allCases[indexPath.section]
+        if section == .genre, showsGenreStatusRow { return }
 
         let previous = checkedRow(in: section)
 
