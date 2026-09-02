@@ -1,63 +1,63 @@
 # TMDB Showcase (iOS)
 
-Репозиторий с 6 реализациями одного и того же приложения на разных UI-архитектурах.
+One application implemented six times, each on a different UI architecture.
 
-## Архитектуры
+## Architectures
 
-| #   | Архитектура                       | Статус          |
-| --- | --------------------------------- | --------------- |
-| 1   | MVC                               | 🚧 в разработке |
-| 2   | MVP                               | ⏳ не начато    |
-| 3   | MVVM                              | ⏳ не начато    |
-| 4   | VIPER                             | ⏳ не начато    |
-| 5   | VIP (Clean Swift)                 | ⏳ не начато    |
-| 6   | TCA (The Composable Architecture) | ⏳ не начато    |
+| #   | Architecture                      | Status         |
+| --- | --------------------------------- | -------------- |
+| 1   | MVC                               | 🚧 in progress |
+| 2   | MVP                               | ⏳ not started  |
+| 3   | MVVM                              | ⏳ not started  |
+| 4   | VIPER                             | ⏳ not started  |
+| 5   | VIP (Clean Swift)                 | ⏳ not started  |
+| 6   | TCA (The Composable Architecture) | ⏳ not started  |
 
-## Идея
+## The idea
 
-Одно и то же приложение реализуется 6 раз — с одинаковым доменным слоем и одинаковым API, но разным Presentation-слоем.
+The same app, six times over — identical domain layer and identical API, a different presentation layer each time.
 
-## Демо-приложение: Movie Catalog
+## Demo app: Movie Catalog
 
-Каталог фильмов на основе [TMDB API](https://developer.themoviedb.org/docs/getting-started).
+A movie catalogue built on the [TMDB API](https://developer.themoviedb.org/docs/getting-started).
 
-### Фичи
+### Features
 
 **1. Movies**
 
-- Список популярных/трендовых фильмов с пагинацией
-- Поиск с debounce
-- Фильтр по жанру
-- Переход на экран деталей
+- Popular and trending movies with pagination
+- Search with debounce
+- Genre filter
+- Push to the details screen
 
 **2. Watchlist / Favorites**
 
-- Локальное хранение избранного
-- Отражение состояния "в избранном" на экране Movies
+- Local storage of favourites
+- The "in watchlist" flag reflected on the Movies screen
 
-### Навигация
+### Navigation
 
 - Tab bar: Movies / Watchlist
-- Push на Detail из обоих табов
-- Модальный экран сортировки/фильтров
+- Push to Detail from both tabs
+- Modal sort and filter screen
 
-### Обработка ошибок
+### Error handling
 
-TMDB API ограничен для доступа из РФ/РБ (гео-блокировка на уровне CDN).
+TMDB is geo-blocked at the CDN level for RU/BY.
 
-- Классификация HTTP-ошибок (401 со структурированным телом от TMDB / 403 без тела от CDN) в единую доменную ошибку `AppError`
-- Toast-уведомление пользователя о `.regionRestricted`
-- Пользователям из затронутых регионов необходим VPN
+- HTTP failures are classified into the single domain error `AppError` — a 401 carries a structured TMDB body, the CDN block answers 403 with none
+- `.regionRestricted` is surfaced to the user as a toast
+- Users in the affected regions need a VPN
 
-## Архитектура репозитория
+## Repository layout
 
 ```
 TMDB-Showcase.xcworkspace
-├── SharedKit/                      (локальный Swift Package)
+├── SharedKit/                      (local Swift package)
 │   └── Sources/
-│       ├── DomainKit/              (Entities, UseCase-протоколы, Repository-протоколы, AppError)
-│       ├── DataKit/                (DTO, TMDB API client, реализация Repository, маппинг ошибок)
-│       └── DomainKitTestSupport/   (фикстуры и стабы домена для тестов -App проектов)
+│       ├── DomainKit/              entities, use case and repository protocols, AppError
+│       ├── DataKit/                DTOs, TMDB client, repository implementations, error mapping
+│       └── DomainKitTestSupport/   domain fixtures and stubs for the -App test targets
 ├── MVC-App/
 ├── MVP-App/
 ├── MVVM-App/
@@ -66,26 +66,26 @@ TMDB-Showcase.xcworkspace
 └── TCA-App/
 ```
 
-Domain и Data слои общие для всех 6 модулей. Presentation-слой (Presenter/ViewModel/Interactor/Reducer/Store) уникален для каждой архитектуры и находится в соответствующем `-App` проекте.
+The domain and data layers are shared by all six modules. The presentation layer — presenter, view model, interactor, reducer or store — is unique to each architecture and lives in its own `-App` project.
 
-Границы между слоями и договорённости, обязательные для всех шести реализаций, описаны в [SharedKit/README.md](SharedKit/README.md). Особенности конкретного модуля — в его README, например [MVC-App/README.md](MVC-App/README.md).
+The boundaries between layers, binding on all six implementations, are written down in [SharedKit/README.md](SharedKit/README.md). Notes specific to one module live in its own README, for instance [MVC-App/README.md](MVC-App/README.md).
 
-## Стек
+## Stack
 
-- Swift 6 language mode, iOS 17+ (минимум для SwiftData)
+- Swift 6 language mode, iOS 17+ (the floor for SwiftData)
 - SPM
 - TMDB REST API
-- [Nuke](https://github.com/kean/Nuke) — загрузка и кеш постеров. Единственная сторонняя зависимость: домен и данные не зависят ни от чего, кроме `Foundation`
-- CI: GitLab CI / Fastlane (планируется)
+- [Nuke](https://github.com/kean/Nuke) for loading and caching posters. The only third-party dependency: the domain and data layers import nothing but `Foundation`
+- CI: GitLab CI / Fastlane (planned)
 
-## Текущий статус
+## Current status
 
-`DomainKit` и `DataKit` реализованы для фичи Movies: сущности, `AppError`, протоколы и их TMDB-реализации, классификация ошибок, сборщик URL картинок, фикстуры и стабы для тестов.
+`DomainKit` and `DataKit` are done for the Movies feature: entities, `AppError`, the protocols and their TMDB implementations, error classification, the image URL builder, plus fixtures and stubs for tests.
 
-В `MVC-App` готов экран списка популярных фильмов — сетка постеров с пагинацией, обработкой ошибок и pull-to-refresh. Следующие шаги: поиск с debounce и фильтр по жанру, экран деталей, затем остальные пять архитектур. Кеш (SwiftData) и Watchlist — отдельно.
+`MVC-App` has a working list of popular movies — a poster grid with pagination, error handling and pull-to-refresh. Next: search with debounce and the genre filter, then the details screen, then the remaining five architectures. Caching (SwiftData) and Watchlist come separately.
 
-## Настройка окружения
+## Setting up
 
-1. Зарегистрироваться на [themoviedb.org](https://www.themoviedb.org/signup) и взять **API Read Access Token** (v4, длинный JWT) в Settings → API. Короткий v3 API Key не подойдёт — запросы уходят с заголовком `Authorization: Bearer`
-2. Скопировать `Config.xcconfig.example` → `Config.xcconfig` **в корне репозитория**, подставить токен. Файл в `.gitignore`
-3. Пользователям из РФ/РБ — включить VPN для доступа к API
+1. Sign up at [themoviedb.org](https://www.themoviedb.org/signup) and take the **API Read Access Token** (v4, a long JWT) from Settings → API. The short v3 API key will not do — requests go out with an `Authorization: Bearer` header
+2. Copy `Config.xcconfig.example` to `Config.xcconfig` **in the repository root** and paste the token. The file is gitignored
+3. From RU/BY, switch on a VPN to reach the API

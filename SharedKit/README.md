@@ -1,43 +1,43 @@
 # SharedKit
 
-Локальный Swift Package с доменным слоем и слоем данных. Общий для всех шести реализаций приложения — Presentation-слой у каждой свой, всё остальное берётся отсюда без изменений.
+A local Swift package holding the domain and data layers. Shared by all six implementations of the app — each has its own presentation layer, everything else is taken from here unchanged.
 
-| Таргет                | Назначение                                                       | Статус       |
-| --------------------- | ---------------------------------------------------------------- | ------------ |
-| `DomainKit`           | Сущности, `AppError`, протоколы репозиториев и use cases          | ✅ фича Movies |
-| `DataKit`             | DTO, TMDB API-клиент, реализации репозиториев, маппинг ошибок      | ✅ фича Movies |
-| `DomainKitTestSupport`| Фикстуры и стабы домена для тестов всех шести `-App`               | ✅            |
+| Target                 | Purpose                                                        | Status          |
+| ---------------------- | -------------------------------------------------------------- | --------------- |
+| `DomainKit`            | Entities, `AppError`, repository and use case protocols          | ✅ Movies feature |
+| `DataKit`              | DTOs, TMDB API client, repository implementations, error mapping | ✅ Movies feature |
+| `DomainKitTestSupport` | Domain fixtures and stubs for all six `-App` test targets        | ✅               |
 
-Swift 6 language mode, iOS 17+. `DomainKit` не импортирует ничего, кроме `Foundation`.
+Swift 6 language mode, iOS 17+. `DomainKit` imports nothing but `Foundation`.
 
-## Границы слоёв
+## Layer boundaries
 
-Правила, на которые опираются все шесть Presentation-реализаций.
+The rules all six presentation implementations rest on.
 
-**Домен не знает про TMDB.** Пути картинок хранятся относительными строками (`posterPath`), полный URL собирает DataKit. Строки `sort_by`, путь окна трендов, ограничение TMDB на `page > 500` — тоже DataKit. В домене перечисления без `RawValue`.
+**The domain knows nothing about TMDB.** Image paths are stored as relative strings (`posterPath`) and DataKit assembles the full URL. The `sort_by` strings, the trending window path and TMDB's `page > 500` limit are DataKit's too. Domain enums carry no `RawValue`.
 
-**Домен stateless.** Пагинация — чистая функция `(query, page) -> Page<Movie>`. Накопленный список, текущая страница и флаг догрузки живут в Presenter / ViewModel / Interactor / Reducer. Это сознательный отказ от stateful-пагинатора: у TCA он создал бы второй источник состояния вне Store.
+**The domain is stateless.** Pagination is a pure `(query, page) -> Page<Movie>`. The accumulated list, the current page and the loading flag live in the presenter, view model, interactor or reducer. This is a deliberate refusal of a stateful paginator: in TCA it would create a second source of state outside the store.
 
-**Наружу только `async/await`.** Никакого Combine в `DomainKit`: он навязал бы одну модель реактивности всем шести архитектурам и не дружит со Swift 6 (паблишеры не `Sendable`). Запрет действует только на пакет — если MVVM-реализации нужен `@Published` поверх `async`-вызова, это её право и часть витрины различий.
+**Only `async/await` crosses the boundary.** No Combine in `DomainKit`: it would impose one reactivity model on all six architectures and does not sit well with Swift 6, where publishers are not `Sendable`. The ban covers the package alone — if an MVVM implementation wants `@Published` on top of an `async` call, that is its right and part of what the showcase compares.
 
-**Классификация ошибок — обязанность DataKit.** Репозитории объявлены с типизированным `throws(AppError)`, поэтому `URLError`, `DecodingError` и прочий транспорт наружу не просачиваются физически. Отмену DataKit тоже обязан перехватить: через типизированный `throws` `CancellationError` не пролетает, для неё есть `AppError.cancelled`.
+**Classifying errors is DataKit's job.** The repositories are declared with typed `throws(AppError)`, so `URLError`, `DecodingError` and the rest of the transport physically cannot leak out. Cancellation has to be caught there too: `CancellationError` does not travel through typed `throws`, which is why `AppError.cancelled` exists.
 
-**Валидация ввода — в Presentation, но закреплена типом.** Обрезка пробелов и проверка «пустой поиск» намеренно дублируются в шести реализациях: это одна из осей сравнения архитектур, и живёт она рядом с debounce. Чтобы дублирование не стало шестью шансами забыть проверку, правило держит тип:
+**Input validation lives in presentation, pinned by a type.** Trimming whitespace and rejecting a blank search are duplicated across the six implementations on purpose: it is one of the axes being compared, and it belongs next to the debounce. So the duplication does not become six chances to forget the check, the rule is held by a type:
 
 ```swift
 guard let text = SearchText(searchField.text ?? "") else {
-    return showPopular()          // пустой ввод — не повод идти в сеть
+    return showPopular()          // blank input is no reason to hit the network
 }
 load(query: .search(text))
 ```
 
-`MoviesQuery.search` невозможно собрать из пробелов, так что компилятор не даст пропустить валидацию.
+`MoviesQuery.search` cannot be built out of whitespace, so the compiler will not let the validation be skipped.
 
-**Токен приходит снаружи.** `DataKit` не читает `Bundle.main`: пакет собирается и в `swift test`, где хост-бандла нет. Приложение конструирует `TMDBConfiguration(accessToken:)` и передаёт в репозитории. Используется v4 Read Access Token в заголовке `Authorization: Bearer`, не v3 `api_key` в query.
+**The token comes from outside.** `DataKit` never reads `Bundle.main`: the package also builds under `swift test`, where there is no host bundle. The app constructs `TMDBConfiguration(accessToken:)` and passes it to the repositories. A v4 Read Access Token goes in an `Authorization: Bearer` header — not a v3 `api_key` in the query.
 
-**Флаг «в избранном» не станет полем `Movie`.** Watchlist-состояние накладывается на `[Movie]` в Presentation по `Set<Movie.ID>` из будущего `WatchlistRepository`.
+**The "in watchlist" flag will not become a field on `Movie`.** Watchlist state is overlaid onto `[Movie]` in presentation through a `Set<Movie.ID>` from the future `WatchlistRepository`.
 
-## Что где лежит
+## What lives where
 
 ```
 Sources/DomainKit/
@@ -48,38 +48,48 @@ Sources/DomainKit/
 └── UseCases/       FetchMovies, FetchMovieDetails, FetchGenres
 ```
 
-Use case — протокол с `callAsFunction` плюс struct-реализация. Presentation зависит от протокола (`any FetchMoviesUseCase`), поэтому в тестах презентеров и вьюмоделей подставляется стаб use case, а не фейковый репозиторий.
+A use case is a protocol with `callAsFunction` plus a struct implementation. Presentation depends on the protocol (`any FetchMoviesUseCase`), so presenter and view model tests substitute a use case stub rather than a fake repository.
 
-`Movie` и `MovieDetails` — разные типы, а не один с опциональными полями: в объединённом типе `runtime: Int?` означал бы одновременно «ещё не загружено» и «неизвестно».
+`Movie` and `MovieDetails` are separate types rather than one type with optional fields: in a merged type `runtime: Int?` would mean both "not loaded yet" and "unknown" at once.
 
 ```
 Sources/DataKit/
 ├── Configuration/  TMDBConfiguration
-├── Networking/     TMDBAPIClient, TMDBEndpoint, TMDBStatusResponse
+├── Networking/     TMDBAPIClient, TMDBEndpoint, TMDBStatusResponse, JSONDecoder+TMDB
 ├── DTOs/           PagedResponseDTO<Item>, MovieDTO, MovieDetailsDTO, GenreDTO
-├── Mapping/        AppError+Classification, MoviesQuery+Endpoint, TMDBDate
+├── Mapping/        AppError+Classification, MoviesQuery+Endpoint, TMDBDate,
+│                   Optional+NonEmpty
 ├── Repositories/   TMDBMoviesRepository, TMDBGenresRepository
 └── Images/         TMDBImageURLBuilder
 ```
 
-Наружу публичны только `TMDBConfiguration`, две реализации репозиториев и `TMDBImageURLBuilder`. DTO, клиент и эндпоинты — `internal`: шесть приложений не должны знать формат TMDB, в этом и смысл границы.
+Only `TMDBConfiguration`, the two repository implementations and `TMDBImageURLBuilder` are public. DTOs, the client and the endpoints are `internal`: the six apps have no business knowing TMDB's wire format, which is the whole point of the boundary.
 
-Единственный `do/catch` пакета живёт в `TMDBAPIClient`; `AppError` рождается только там, через `init(httpStatusCode:body:)` и `init(transportError:)`. 403 разбирается по телу: пустое — гео-блокировка CDN, со `status_code` — отказ по токену. Иначе пользователю с битым токеном советовали бы включить VPN.
+The package's single `do/catch` lives in `TMDBAPIClient`, and `AppError` is born only there, through `init(httpStatusCode:body:)` and `init(transportError:)`. A 403 is told apart by its body: empty means the CDN geo-block, one carrying `status_code` means TMDB rejected the token. Otherwise someone with a broken token would be advised to switch on a VPN.
 
-## Использование
+## Using it
 
-В `-App` проекте пакет подключается как локальная зависимость, дальше `import DomainKit`. В тест-таргете — `import DomainKitTestSupport`:
+In an `-App` project the package is added as a local dependency, then `import DomainKit`. In a test target, `import DomainKitTestSupport`.
+
+Presentation tests stub the use case, since that is what presentation depends on:
+
+```swift
+let fetchMovies = FetchMoviesStub(
+    result: .success(.fixture(items: Movie.fixtures(count: 20), totalPages: 5))
+)
+```
+
+Domain tests go one level lower and stub the repository instead:
 
 ```swift
 let repository = MoviesRepositoryStub(
     moviesResult: .success(.fixture(items: Movie.fixtures(count: 20), totalPages: 5))
 )
-let sut = MoviesPresenter(fetchMovies: FetchMovies(repository: repository))
 ```
 
-Стабы репозиториев и use cases — акторы с журналом вызовов (`moviesCalls`), фикстуры детерминированы: даты берутся от `Fixtures.referenceDate`, а не от текущего момента.
+Repository and use case stubs are actors with a call log (`moviesCalls`, `calls`). Fixtures are deterministic: dates come from `Fixtures.referenceDate`, never from the current moment.
 
-## Проверка
+## Verifying
 
 ```bash
 swift build --package-path SharedKit
@@ -89,12 +99,12 @@ swift build --package-path SharedKit
 swift test --package-path SharedKit
 ```
 
-Прогон по умолчанию герметичен: транспорт подменяется через `URLProtocol`, поэтому тесты не требуют ни симулятора, ни токена, ни VPN.
+The default run is hermetic: the transport is swapped out through `URLProtocol`, so the tests need no simulator, no token and no VPN.
 
-Отдельно живёт контрактный ярус (`TMDBContractTests`) — пять запросов к настоящему TMDB. Фикстуры фиксируют вчерашний контракт и не заметят, если TMDB переименует поле или перестанет принимать строку `sort_by`; ловит это только живой запрос. Ярус включается наличием токена в окружении, иначе помечается skipped:
+A contract tier (`TMDBContractTests`) lives alongside it — five requests against the real TMDB. Fixtures pin yesterday's contract and will not notice if TMDB renames a field or stops accepting a `sort_by` string; only a live request catches that. The tier switches on when a token is present in the environment, and is reported as skipped otherwise:
 
 ```bash
-TMDB_ACCESS_TOKEN=$(grep TMDB_ACCESS_TOKEN Config.xcconfig | cut -d= -f2 | xargs) swift test --package-path SharedKit --filter TMDBContract
+TMDB_ACCESS_TOKEN="$(sed -n 's/^TMDB_ACCESS_TOKEN[[:space:]]*=[[:space:]]*//p' Config.xcconfig | tr -d '[:space:]')" swift test --package-path SharedKit --filter TMDBContract
 ```
 
-Из РФ/РБ для него нужен VPN — TMDB закрыт на уровне CDN.
+From RU/BY it needs a VPN — TMDB is blocked at the CDN.

@@ -4,13 +4,14 @@ import DomainKit
 import DomainKitTestSupport
 @testable import DataKit
 
-/// Проверяет, что TMDB всё ещё отвечает так, как описывают фикстуры.
+/// Checks that TMDB still answers the way the fixtures describe.
 ///
-/// Фикстуры фиксируют вчерашний контракт: если TMDB переименует поле, выкинет
-/// эндпоинт или перестанет принимать строку `sort_by`, герметичные тесты
-/// останутся зелёными, а приложение сломается. Ловит это только живой запрос.
+/// Fixtures pin yesterday's contract: if TMDB renames a field, drops an endpoint
+/// or stops accepting a `sort_by` string, the hermetic tests stay green while the
+/// app breaks. Only a live request catches that.
 ///
-/// `.serialized` — пять запросов подряд не должны выглядеть всплеском и ловить 429.
+/// `.serialized` keeps five requests in a row from looking like a burst and
+/// drawing a 429.
 @Suite("TMDBContract", .requiresTMDBAccess, .serialized, .tags(.live))
 struct TMDBContractTests {
     private var movies: TMDBMoviesRepository {
@@ -29,7 +30,7 @@ struct TMDBContractTests {
 
     @Test("Строки sort_by всё ещё принимаются", arguments: MovieSortOption.allCases)
     func discoverAcceptsSortOption(option: MovieSortOption) async throws {
-        // Протухшая строка даёт 422, который классификация схлопнет в .unknown.
+        // A stale string yields 422, which the classifier collapses into .unknown.
         let page = try await movies.movies(
             query: .discover(genreID: nil, sortedBy: option),
             page: 1

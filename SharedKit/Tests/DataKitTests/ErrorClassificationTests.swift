@@ -26,7 +26,7 @@ struct ErrorClassificationTests {
     func structuredForbiddenIsUnauthorized() throws {
         let body = try TestFixtures.data("error_401")
 
-        // Иначе пользователю с битым токеном посоветовали бы включить VPN.
+        // Otherwise someone with a broken token would be told to switch on a VPN.
         #expect(AppError(httpStatusCode: 403, body: body) == .unauthorized)
     }
 

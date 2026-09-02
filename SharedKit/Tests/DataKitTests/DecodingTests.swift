@@ -64,7 +64,8 @@ struct DecodingTests {
     func clampsTotalPages() throws {
         let page = try decodePage()
 
-        // Фикстура сообщает 45231 — без клампа hasNextPage обещал бы недостижимое.
+        // The fixture reports 45231; unclamped, hasNextPage would promise a page
+        // that cannot be fetched.
         #expect(page.totalPages == 500)
         #expect(page.totalResults == 904611)
         #expect(page.page == 1)
@@ -96,7 +97,7 @@ struct DecodingTests {
         #expect(details.runtime == nil)
         #expect(details.releaseDate == nil)
         #expect(details.genres == [])
-        // TMDB опускает original_title у части записей — подставляем title.
+        // TMDB omits original_title on some records, so title stands in.
         #expect(details.originalTitle == "Sparse Movie")
     }
 
