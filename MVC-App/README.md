@@ -58,6 +58,10 @@ The reading is deliberately literal: `MoviesViewController` owns the accumulated
 
 For the same reason it uses a classic `dataSource` rather than a diffable one: it leaves the state juggling on display, which is the point of the exercise.
 
+That state is still modelled on two axes rather than left as a heap of parallel variables: `Feed` is what we have (movies plus the paging cursor), `Activity` is what we are doing (`idle` / `loading(Task)` / `failed`). The in-flight task lives inside the `.loading` case, so "loading with nothing in flight" and "a request nobody waits on" are not expressible, and cancellation is read from `Task.isCancelled` rather than a generation counter.
+
+This is deliberately orthogonal to the pattern. Modelling state so illegal combinations do not compile is something a competent MVC does too — moving the same variables into a presenter would reproduce the same bugs one layer up. Keeping it here means the comparison with the other five measures the architecture, not how carelessly the first implementation was written.
+
 Empty states — loading, no results, and failure with a retry button — are built on `contentUnavailableConfiguration` (iOS 17+) rather than a bespoke view. A hand-rolled one was written and then deleted: UIKit covers all three first-party, and `searchConfiguration` will come in useful for empty search results. The SwiftUI TCA version will use `ContentUnavailableView`, so none of this needs to move into a shared UI package.
 
 The tests in `MVC-AppTests` measure what that costs. To check pagination you have to stand the whole view up, find the `UICollectionView` by walking the hierarchy, and poll for an in-flight `Task` that is never exposed. Under MVP the same checks become a call to a presenter method.

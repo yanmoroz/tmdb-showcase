@@ -5,25 +5,53 @@ import DataKit
 final class MoviesViewController: UIViewController {
     private let fetchMovies: any FetchMoviesUseCase
     private let imageURLBuilder: TMDBImageURLBuilder
-    private let query: MoviesQuery = .popular
 
-    private enum ScreenState {
-        case loading
-        case loaded
+    /// The accumulated answer to one query.
+    ///
+    /// `query` is a `let` on purpose: page 3 of `.popular` and page 3 of a search
+    /// are different things, so changing the question has to mean building a new
+    /// `Feed`. That makes "pages accumulated for a query we are no longer asking"
+    /// unrepresentable instead of a reset somebody has to remember.
+    private struct Feed {
+        let query: MoviesQuery
+
+        private(set) var movies: [Movie] = []
+        private(set) var loadedPage = 0
+        private(set) var totalPages = 1
+
+        var isEmpty: Bool { movies.isEmpty }
+        var count: Int { movies.count }
+
+        /// `nil` once the pages run out.
+        var nextPage: Int? { loadedPage < totalPages ? loadedPage + 1 : nil }
+
+        subscript(item: Int) -> Movie { movies[item] }
+
+        mutating func append(_ page: Page<Movie>) {
+            movies.append(contentsOf: page.items)
+            loadedPage = page.page
+            totalPages = page.totalPages
+        }
+    }
+
+    /// What we are doing.
+    ///
+    /// The task lives inside the case on purpose: "loading with nothing in
+    /// flight" and "a request nobody is waiting on" both become unrepresentable.
+    private enum Activity {
+        case idle
+        case loading(Task<Void, Never>)
         case failed(AppError)
     }
 
     /// Two rows short of the end.
     private static let loadAheadItems = 6
 
-    private var movies: [Movie] = []
-    private var loadedPage = 0
-    private var totalPages = 1
-    private var loadTask: Task<Void, Never>?
-    /// Bumped by every reload so an in-flight task can tell it is stale.
-    private var loadGeneration = 0
+    private var feed = Feed(query: .popular) {
+        didSet { setNeedsUpdateContentUnavailableConfiguration() }
+    }
 
-    private var screenState: ScreenState = .loading {
+    private var activity: Activity = .idle {
         didSet { setNeedsUpdateContentUnavailableConfiguration() }
     }
 
@@ -42,7 +70,9 @@ final class MoviesViewController: UIViewController {
     }
 
     deinit {
-        loadTask?.cancel()
+        if case .loading(let task) = activity {
+            task.cancel()
+        }
     }
 
     override func viewDidLoad() {
@@ -56,57 +86,48 @@ final class MoviesViewController: UIViewController {
     // MARK: - Loading
 
     private func reload() {
-        // Clearing the reference matters as much as cancelling: cancel() only
-        // raises a flag, and loadNextPage() below refuses to start while
-        // loadTask is non-nil.
-        loadTask?.cancel()
-        loadTask = nil
-        loadGeneration += 1
-
-        loadedPage = 0
-        totalPages = 1
-        movies = []
+        if case .loading(let task) = activity {
+            task.cancel()
+        }
+        activity = .idle
+        feed = Feed(query: feed.query)
         collectionView.reloadData()
-        screenState = .loading
         loadNextPage()
     }
 
     private func loadNextPage() {
-        guard loadTask == nil, loadedPage < totalPages else { return }
+        if case .loading = activity { return }
+        guard let page = feed.nextPage else { return }
 
-        let page = loadedPage + 1
-        let generation = loadGeneration
-        loadTask = Task { [weak self] in
-            guard let self else { return }
-            // Only the current generation owns loadTask; a stale task clearing it
-            // would let a duplicate request for the same page start.
-            defer { if generation == loadGeneration { loadTask = nil } }
+        activity = .loading(
+            Task { [weak self] in
+                guard let self else { return }
 
-            let outcome: Result<Page<Movie>, AppError>
-            do {
-                outcome = .success(try await fetchMovies(query: query, page: page))
-            } catch let error as AppError {
-                outcome = .failure(error)
-            } catch {
-                outcome = .failure(.unknown)
+                let outcome: Result<Page<Movie>, AppError>
+                do {
+                    outcome = .success(try await fetchMovies(query: feed.query, page: page))
+                } catch let error as AppError {
+                    outcome = .failure(error)
+                } catch {
+                    outcome = .failure(.unknown)
+                }
+
+                // Cancelled while the request flew: another load owns the state
+                // now, and the cancellation flag outlives the suspension.
+                guard !Task.isCancelled else { return }
+
+                switch outcome {
+                case .success(let result): append(result)
+                case .failure(let error): handle(error)
+                }
             }
-
-            // reload() may have started a new generation while the request flew.
-            guard generation == loadGeneration else { return }
-
-            switch outcome {
-            case .success(let result): append(result)
-            case .failure(let error): handle(error)
-            }
-        }
+        )
     }
 
     private func append(_ page: Page<Movie>) {
         refreshControl.endRefreshing()
-
-        loadedPage = page.page
-        totalPages = page.totalPages
-        movies.append(contentsOf: page.items)
+        feed.append(page)
+        activity = .idle
 
         // reloadData rather than insertItems: a batch update needs the collection
         // view to have recounted itself after the previous reloadData. Between
@@ -114,12 +135,11 @@ final class MoviesViewController: UIViewController {
         // and insertItems then trips Invalid_Batch_Updates. Content only grows at
         // the end, and reloadData keeps contentOffset.
         collectionView.reloadData()
-        screenState = .loaded
 
         // While the page was loading, willDisplay already fired for every cell
-        // near the end and hit a busy loadTask. Without this recheck the list
-        // stalls at the bottom: no new cells appear, so nothing is left to ask
-        // for the next page.
+        // near the end and found a load in progress. Without this recheck the
+        // list stalls at the bottom: no new cells appear, so nothing is left to
+        // ask for the next page.
         // Nothing on screen means no reader to run out of items, so a page that
         // came back empty must not pull the next one on its own.
         if let lastVisibleItem {
@@ -133,23 +153,25 @@ final class MoviesViewController: UIViewController {
     }
 
     private func loadNextPageIfNearEnd(_ item: Int) {
-        guard item >= movies.count - Self.loadAheadItems else { return }
+        guard item >= feed.count - Self.loadAheadItems else { return }
         loadNextPage()
     }
 
     private func handle(_ error: AppError) {
         refreshControl.endRefreshing()
 
-        if movies.isEmpty {
-            // Cancellation lands here too. `.loading` has no exit of its own, so
-            // leaving the state untouched would strand the screen on a spinner
-            // whenever a cancellation is not followed by a new load — a system
-            // cancellation from URLSession, for one.
-            screenState = .failed(error)
-        } else if error != .cancelled {
+        if feed.isEmpty {
+            // Cancellation lands here too: a cancellation that is not followed by
+            // a new load — a system one from URLSession, for instance — would
+            // otherwise leave the screen with nothing to show and no way out.
+            activity = .failed(error)
+        } else {
+            activity = .idle
             // The list already has content: a page error must not replace it,
             // and a cancellation is not worth reporting at all.
-            ToastView.show(error.message, in: view)
+            if error != .cancelled {
+                ToastView.show(error.message, in: view)
+            }
         }
     }
 
@@ -158,16 +180,14 @@ final class MoviesViewController: UIViewController {
     override func updateContentUnavailableConfiguration(
         using state: UIContentUnavailableConfigurationState
     ) {
-        switch screenState {
-        case .loading:
-            contentUnavailableConfiguration = UIContentUnavailableConfiguration.loading()
-
-        case .loaded:
-            // An overlay over a non-empty list would lie: the page did arrive.
-            contentUnavailableConfiguration = movies.isEmpty ? emptyConfiguration() : nil
-
-        case .failed(let error):
-            contentUnavailableConfiguration = failureConfiguration(error)
+        // Derived from the two axes rather than assigned by hand: an overlay
+        // cannot cover a non-empty list, because every branch that produces one
+        // requires an empty feed.
+        contentUnavailableConfiguration = switch activity {
+        case .loading where feed.isEmpty: UIContentUnavailableConfiguration.loading()
+        case .failed(let error): failureConfiguration(error)
+        case .idle where feed.isEmpty: emptyConfiguration()
+        default: nil
         }
     }
 
@@ -275,7 +295,7 @@ final class MoviesViewController: UIViewController {
 
 extension MoviesViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        movies.count
+        feed.count
     }
 
     func collectionView(
@@ -286,7 +306,7 @@ extension MoviesViewController: UICollectionViewDataSource {
             withReuseIdentifier: MovieCell.reuseIdentifier,
             for: indexPath
         )
-        (cell as? MovieCell)?.configure(with: model(for: movies[indexPath.item]))
+        (cell as? MovieCell)?.configure(with: model(for: feed[indexPath.item]))
         return cell
     }
 }
