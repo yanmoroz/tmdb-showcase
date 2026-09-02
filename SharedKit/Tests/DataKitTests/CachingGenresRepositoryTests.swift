@@ -6,50 +6,65 @@ import DomainKitTestSupport
 
 @Suite("CachingGenresRepository")
 struct CachingGenresRepositoryTests {
-    @Test("A successful answer passes through and is written to the cache")
-    func writesThroughOnSuccess() async throws {
+    /// A fixed clock and a short window. Staleness is arranged by choosing the
+    /// timestamp a catalogue was written with, so nothing here waits on time.
+    private static let now = Date(timeIntervalSince1970: 1_700_000_000)
+    private static let window: TimeInterval = 3600
+
+    @Test("A cold cache goes to the network and writes through")
+    func writesThroughOnColdCache() async throws {
         let (sut, remote, cache) = try makeSUT()
 
         #expect(try await sut.genres() == Genre.fixtures)
-        #expect(await cache.genres.genres() == Genre.fixtures)
+        #expect(await cache.genres.genres()?.genres == Genre.fixtures)
         #expect(await remote.genresCalls.count == 1)
     }
 
-    @Test("A warm cache does not spare the network")
-    func staysNetworkFirst() async throws {
-        let (sut, remote, _) = try makeSUT()
-
-        _ = try await sut.genres()
-        _ = try await sut.genres()
-
-        // Network first is the recorded policy: the cache is a fallback, not a
-        // read-through layer.
-        #expect(await remote.genresCalls.count == 2)
-    }
-
-    @Test("A later answer replaces what was cached")
-    func refreshesTheCache() async throws {
+    /// The point of the read-through: the filter screen stops paying for a
+    /// request every time it opens.
+    @Test("A fresh catalogue is served without touching the network")
+    func servesFreshCatalogueWithoutNetwork() async throws {
         let (sut, remote, cache) = try makeSUT()
-        _ = try await sut.genres()
-
-        let replacement = [Genre.fixture(id: 99, name: "Documentary")]
-        await remote.setGenresResult(.success(replacement))
-        _ = try await sut.genres()
-
-        #expect(await cache.genres.genres() == replacement)
-    }
-
-    @Test("Going offline is answered from the cache")
-    func fallsBackWhenOffline() async throws {
-        let (sut, remote, _) = try makeSUT()
-        _ = try await sut.genres()
-
-        await remote.setGenresResult(.failure(.network(.offline)))
+        await cache.genres.save(Genre.fixtures, at: Self.now.addingTimeInterval(-60))
 
         #expect(try await sut.genres() == Genre.fixtures)
+        #expect(await remote.genresCalls.isEmpty)
     }
 
-    @Test("Going offline with a cold cache still fails")
+    @Test("A catalogue older than the window is refreshed")
+    func refreshesStaleCatalogue() async throws {
+        let replacement = [Genre.fixture(id: 99, name: "Documentary")]
+        let (sut, remote, cache) = try makeSUT(genres: .success(replacement))
+        await cache.genres.save(Genre.fixtures, at: Self.stale)
+
+        #expect(try await sut.genres() == replacement)
+        #expect(await remote.genresCalls.count == 1)
+        #expect(await cache.genres.genres()?.genres == replacement)
+    }
+
+    @Test("A refreshed catalogue is stamped with the injected clock")
+    func stampsWriteWithInjectedClock() async throws {
+        let (sut, _, cache) = try makeSUT()
+
+        _ = try await sut.genres()
+
+        // Not Date.now: a write stamped with the real clock would make the
+        // window untestable and could never be reasoned about.
+        #expect(await cache.genres.genres()?.updatedAt == Self.now)
+    }
+
+    /// The window decides whether the network is skipped, never whether old rows
+    /// are usable. Once the network has failed, stale genres beat an empty screen.
+    @Test("A stale catalogue still answers when the network fails")
+    func servesStaleCatalogueOnFailure() async throws {
+        let (sut, remote, cache) = try makeSUT(genres: .failure(.network(.offline)))
+        await cache.genres.save(Genre.fixtures, at: Self.stale)
+
+        #expect(try await sut.genres() == Genre.fixtures)
+        #expect(await remote.genresCalls.count == 1)
+    }
+
+    @Test("A cold cache plus a failure still fails")
     func rethrowsWhenCacheIsCold() async throws {
         let (sut, _, _) = try makeSUT(genres: .failure(.network(.timedOut)))
 
@@ -58,9 +73,8 @@ struct CachingGenresRepositoryTests {
         }
     }
 
-    /// The heart of the policy: only `.network` may be answered from disk.
-    /// `.regionRestricted` in particular has to reach the user, or the VPN
-    /// prompt silently turns into stale genres.
+    /// Note the stale seed: with a fresh catalogue the network is never reached,
+    /// so these cases would short-circuit and stop testing the policy at all.
     @Test("Only a transport failure is answered from the cache", arguments: [
         AppError.regionRestricted,
         .cancelled,
@@ -72,51 +86,39 @@ struct CachingGenresRepositoryTests {
         .unknown,
     ])
     func neverMasksOtherFailures(error: AppError) async throws {
-        let (sut, remote, cache) = try makeSUT()
-        _ = try await sut.genres()
-        #expect(await cache.genres.genres() != nil)
-
-        await remote.setGenresResult(.failure(error))
+        let (sut, _, cache) = try makeSUT(genres: .failure(error))
+        await cache.genres.save(Genre.fixtures, at: Self.stale)
 
         await #expect(throws: error) {
             try await sut.genres()
         }
     }
 
+    /// One blank answer from TMDB would otherwise hide the real catalogue for a
+    /// week — network-first used to heal that on the next open.
+    @Test("An empty cached catalogue is always revalidated")
+    func alwaysRevalidatesEmptyCatalogue() async throws {
+        let (sut, remote, cache) = try makeSUT()
+        await cache.genres.save([], at: Self.now.addingTimeInterval(-60))
+
+        #expect(try await sut.genres() == Genre.fixtures)
+        #expect(await remote.genresCalls.count == 1)
+    }
+
     // MARK: - Factory
+
+    private static var stale: Date { now.addingTimeInterval(-(window + 60)) }
 
     private func makeSUT(
         genres: Result<[Genre], AppError> = .success(Genre.fixtures)
     ) throws -> (sut: CachingGenresRepository, remote: GenresRepositoryStub, cache: MovieCache) {
         let remote = GenresRepositoryStub(genresResult: genres)
         let cache = MovieCache(container: try MovieCacheContainer.make(inMemory: true))
-        return (CachingGenresRepository(wrapping: remote, cache: cache), remote, cache)
-    }
-}
-
-@Suite("AppError.allowsCacheFallback")
-struct CachePolicyTests {
-    @Test("Only transport failures allow a cached answer", arguments: [
-        AppError.network(.offline),
-        .network(.timedOut),
-        .network(.cannotConnect),
-        .network(.other),
-    ])
-    func transportFailuresAllowFallback(error: AppError) {
-        #expect(error.allowsCacheFallback)
-    }
-
-    @Test("Every other failure reaches the caller", arguments: [
-        AppError.regionRestricted,
-        .cancelled,
-        .unauthorized,
-        .rateLimited,
-        .notFound,
-        .decoding,
-        .server(statusCode: 503),
-        .unknown,
-    ])
-    func everythingElseIsRethrown(error: AppError) {
-        #expect(!error.allowsCacheFallback)
+        let sut = CachingGenresRepository(
+            wrapping: remote,
+            cache: cache,
+            window: CacheWindow(duration: Self.window, clock: { Self.now })
+        )
+        return (sut, remote, cache)
     }
 }

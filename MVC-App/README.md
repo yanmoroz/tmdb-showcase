@@ -86,4 +86,11 @@ Because a retain cycle is easy to introduce here — the controller holds a `Tas
 
 ## Status
 
-The list of popular movies is done: poster grid, pagination, loading / empty / failure states, a VPN toast on `.regionRestricted`, and pull-to-refresh. Search with debounce is done too — typing switches the query, clearing returns to whatever the filter says, and empty results get the first-party search state. The genre filter and sorting are in, behind a modal screen that owns the genre catalogue. Next up is the details screen.
+The list of popular movies is done: poster grid, pagination, loading / empty / failure states, a toast for errors that must not replace loaded content, and pull-to-refresh. Search with debounce is done too — typing switches the query, clearing returns to whatever the filter says, and empty results get the first-party search state. The genre filter and sorting are in, behind a modal screen that owns the genre catalogue. Next up is the details screen.
+
+The SwiftData cache is wired in `SceneDelegate`, the only place that knows about it:
+both controllers take use cases and cannot tell a cached answer from a live one.
+Offline with a warm cache the grid simply appears; the only remaining signal is the
+toast when scrolling reaches a page the cache never stored, since it keeps page one
+only. Pull-to-refresh offline re-serves the same rows and looks like it succeeded.
+Both costs are deliberate — see [SharedKit/README.md](../SharedKit/README.md).

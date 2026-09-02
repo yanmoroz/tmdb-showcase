@@ -5,7 +5,7 @@ A local Swift package holding the domain and data layers. Shared by all six impl
 | Target                 | Purpose                                                        | Status          |
 | ---------------------- | -------------------------------------------------------------- | --------------- |
 | `DomainKit`            | Entities, `AppError`, repository and use case protocols          | ✅ Movies feature |
-| `DataKit`              | DTOs, TMDB API client, repository implementations, error mapping | ✅ Movies feature |
+| `DataKit`              | DTOs, TMDB API client, repository implementations, error mapping, SwiftData cache | ✅ Movies feature |
 | `DomainKitTestSupport` | Domain fixtures and stubs for all six `-App` test targets        | ✅               |
 
 Swift 6 language mode, iOS 17+. `DomainKit` imports nothing but `Foundation`.
@@ -35,6 +35,30 @@ load(query: .search(text))
 
 **The token comes from outside.** `DataKit` never reads `Bundle.main`: the package also builds under `swift test`, where there is no host bundle. The app constructs `TMDBConfiguration(accessToken:)` and passes it to the repositories. A v4 Read Access Token goes in an `Authorization: Bearer` header — not a v3 `api_key` in the query.
 
+**Caching is a decorator, and the two resources cache differently.**
+`CachingMoviesRepository` and `CachingGenresRepository` wrap the TMDB ones and
+implement the same domain protocols, so nothing above the repository seam knows
+they exist. Feed pages are **network first**: a feed changes hourly, so the cache
+answers only when the request never left the device — `AppError.allowsCacheFallback`
+admits `.network(_)` and nothing else, which is why a geo-block still reaches the
+user with its VPN prompt and a cancelled search stays cancelled. Only page one is
+written; later pages would mean reconciling a partial feed against a cursor that
+only presentation understands.
+
+The genre catalogue is **read-through within a freshness window** instead. Nineteen
+rows that change once a year do not justify a request every time the filter opens,
+and a fallback-only cache would still make that screen fetch and show a loading row
+on every open. The window decides whether the network is skipped, never whether old
+rows are usable: once a request has failed, a stale catalogue still beats an empty
+filter screen. A cached *empty* catalogue is never treated as fresh, so one blank
+answer cannot hide the real list for a week.
+
+Nothing records **where** an answer came from. Carrying provenance would mean
+`Page<Movie>` and `[Genre]` growing a field that all six presentation layers must
+then interpret — the same objection that ruled out stale-while-revalidate — to
+report something the reader cannot act on. The visible cost is that offline
+pull-to-refresh looks like it succeeded.
+
 **The "in watchlist" flag will not become a field on `Movie`.** Watchlist state is overlaid onto `[Movie]` in presentation through a `Set<Movie.ID>` from the future `WatchlistRepository`.
 
 ## What lives where
@@ -59,11 +83,14 @@ Sources/DataKit/
 ├── DTOs/           PagedResponseDTO<Item>, MovieDTO, MovieDetailsDTO, GenreDTO
 ├── Mapping/        AppError+Classification, MoviesQuery+Endpoint, TMDBDate,
 │                   Optional+NonEmpty
-├── Repositories/   TMDBMoviesRepository, TMDBGenresRepository
+├── Persistence/    MovieCache, MovieCacheStore, GenreCacheStore, MoviesQueryKey,
+│                   MovieCacheSchema, MovieCacheContainer, CachePolicy
+├── Repositories/   TMDBMoviesRepository, TMDBGenresRepository,
+│                   CachingMoviesRepository, CachingGenresRepository
 └── Images/         TMDBImageURLBuilder
 ```
 
-Only `TMDBConfiguration`, the two repository implementations and `TMDBImageURLBuilder` are public. DTOs, the client and the endpoints are `internal`: the six apps have no business knowing TMDB's wire format, which is the whole point of the boundary.
+Only `TMDBConfiguration`, the four repository implementations, `MovieCache` and `TMDBImageURLBuilder` are public. The `@Model` types, the stores and `MoviesQueryKey` are `internal` — the cache's shape on disk is nobody else's business. DTOs, the client and the endpoints are `internal`: the six apps have no business knowing TMDB's wire format, which is the whole point of the boundary.
 
 The package's single `do/catch` lives in `TMDBAPIClient`, and `AppError` is born only there, through `init(httpStatusCode:body:)` and `init(transportError:)`. A 403 is told apart by its body: empty means the CDN geo-block, one carrying `status_code` means TMDB rejected the token. Otherwise someone with a broken token would be advised to switch on a VPN.
 

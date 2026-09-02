@@ -241,7 +241,7 @@ final class MoviesViewController: UIViewController {
         var configuration = UIContentUnavailableConfiguration.empty()
         configuration.image = UIImage(systemName: "film")
         configuration.text = "No movies"
-        configuration.secondaryText = "TMDB returned no entries."
+        configuration.secondaryText = "Nothing to show here."
         return configuration
     }
 

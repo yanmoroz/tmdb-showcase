@@ -37,9 +37,19 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     private func makeRoot() -> UIViewController {
         let configuration = AppConfig.tmdb
 
+        var movies: any MoviesRepository = TMDBMoviesRepository(configuration: configuration)
+        var genres: any GenresRepository = TMDBGenresRepository(configuration: configuration)
+
+        // A store that will not open leaves the app running uncached rather than
+        // not running at all.
+        if let cache = MovieCache() {
+            movies = CachingMoviesRepository(wrapping: movies, cache: cache)
+            genres = CachingGenresRepository(wrapping: genres, cache: cache)
+        }
+
         return MoviesViewController(
-            fetchMovies: FetchMovies(repository: TMDBMoviesRepository(configuration: configuration)),
-            fetchGenres: FetchGenres(repository: TMDBGenresRepository(configuration: configuration)),
+            fetchMovies: FetchMovies(repository: movies),
+            fetchGenres: FetchGenres(repository: genres),
             imageURLBuilder: TMDBImageURLBuilder(configuration: configuration)
         )
     }

@@ -340,6 +340,45 @@ final class MoviesViewControllerTests {
         #expect(sut.navigationItem.rightBarButtonItem?.isEnabled == false)
     }
 
+    // MARK: - Offline signals
+
+    /// With the cache wired, a warm page 1 answers offline silently, so this
+    /// toast is what is left to tell the reader the network is gone. It had no
+    /// coverage at all before.
+    @Test("A failed later page toasts over the loaded list")
+    func toastsWhenALaterPageFails() async throws {
+        let page = Page.fixture(items: Movie.fixtures(count: 20), totalPages: 5)
+        let (sut, fetchMovies) = makeSUT(result: .success(page))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { sut.testCollectionView.numberOfItems(inSection: 0) == 20 }
+
+        await fetchMovies.setResult(.failure(.network(.offline)))
+        sut.simulateCellDisplayed(at: 19)
+        try await waitUntil { sut.view.firstSubview(of: ToastView.self) != nil }
+
+        // The list survives the failure, and nothing covers it.
+        #expect(sut.testCollectionView.numberOfItems(inSection: 0) == 20)
+        #expect(sut.currentUnavailableConfiguration == nil)
+    }
+
+    @Test("A cancelled later page says nothing")
+    func staysSilentWhenALaterPageIsCancelled() async throws {
+        let page = Page.fixture(items: Movie.fixtures(count: 20), totalPages: 5)
+        let (sut, fetchMovies) = makeSUT(result: .success(page))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { sut.testCollectionView.numberOfItems(inSection: 0) == 20 }
+
+        await fetchMovies.setResult(.failure(.cancelled))
+        sut.simulateCellDisplayed(at: 19)
+        try await waitUntil { await fetchMovies.calls.count == 2 }
+        await drainPendingWork()
+
+        // A superseded request is not news.
+        #expect(sut.view.firstSubview(of: ToastView.self) == nil)
+    }
+
     // MARK: - Factory
 
     /// The view is deliberately not loaded here: `loadViewIfNeeded()` starts
