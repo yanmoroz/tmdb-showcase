@@ -4,6 +4,7 @@ import DataKit
 
 final class MoviesViewController: UIViewController {
     private let fetchMovies: any FetchMoviesUseCase
+    private let fetchGenres: any FetchGenresUseCase
     private let imageURLBuilder: TMDBImageURLBuilder
 
     /// The accumulated answer to one query.
@@ -55,16 +56,28 @@ final class MoviesViewController: UIViewController {
         didSet { setNeedsUpdateContentUnavailableConfiguration() }
     }
 
+    /// The two independent inputs. `didSet` is what holds the invariant: an input
+    /// cannot change without the query being recomputed from both.
+    private var searchText: SearchText? { didSet { applyInputs() } }
+    private var filter = MoviesFilter() { didSet { applyInputs() } }
+
+    private var currentQuery: MoviesQuery {
+        if let searchText { .search(searchText) } else { filter.query }
+    }
+
     private lazy var collectionView = makeCollectionView()
     private let refreshControl = UIRefreshControl()
     private let searchDebouncer: Debouncer
+    private lazy var filterItem = makeFilterItem()
 
     init(
         fetchMovies: any FetchMoviesUseCase,
+        fetchGenres: any FetchGenresUseCase,
         imageURLBuilder: TMDBImageURLBuilder,
         searchDebounce: Duration = .milliseconds(300)
     ) {
         self.fetchMovies = fetchMovies
+        self.fetchGenres = fetchGenres
         self.imageURLBuilder = imageURLBuilder
         self.searchDebouncer = Debouncer(interval: searchDebounce)
         super.init(nibName: nil, bundle: nil)
@@ -87,6 +100,7 @@ final class MoviesViewController: UIViewController {
         view.backgroundColor = .systemBackground
         setUpSubviews()
         setUpSearch()
+        navigationItem.rightBarButtonItem = filterItem
         reload()
     }
 
@@ -270,13 +284,47 @@ final class MoviesViewController: UIViewController {
 
     private func applySearch(_ input: String) {
         // The failable init of SearchText *is* the "blank input is no reason to
-        // hit the network" rule: nil means fall back to popular.
-        let query: MoviesQuery = SearchText(input).map { .search($0) } ?? .popular
+        // hit the network" rule: nil means fall back to whatever the filter says.
+        searchText = SearchText(input)
+    }
 
-        // MoviesQuery is Hashable precisely so a query can be compared. Deleting
-        // typed text back to what is already on screen must not reload it.
+    /// Recomputes the query from both inputs.
+    ///
+    /// MoviesQuery is Hashable precisely so a query can be compared. Deleting
+    /// typed text back to what is already on screen must not reload it.
+    private func applyInputs() {
+        let query = currentQuery
         guard query != feed.query else { return }
         setQuery(query)
+    }
+
+    // MARK: - Filter
+
+    private func makeFilterItem() -> UIBarButtonItem {
+        UIBarButtonItem(
+            image: UIImage(systemName: "line.3.horizontal.decrease.circle"),
+            primaryAction: UIAction { [weak self] _ in self?.presentFilter() }
+        )
+    }
+
+    private func presentFilter() {
+        guard presentedViewController == nil else { return }
+
+        let filterViewController = MoviesFilterViewController(
+            fetchGenres: fetchGenres,
+            selection: filter
+        ) { [weak self] filter in
+            self?.applyFilter(filter)
+        }
+
+        present(UINavigationController(rootViewController: filterViewController), animated: true)
+    }
+
+    /// The filter screen's callback, named rather than inlined so it is reachable
+    /// without standing up a modal in a windowless test. Internal for that reason
+    /// alone — everything else about the filter stays private.
+    func applyFilter(_ filter: MoviesFilter) {
+        self.filter = filter
     }
 
     // MARK: - Layout
@@ -377,6 +425,12 @@ extension MoviesViewController: UICollectionViewDataSource {
 extension MoviesViewController: UISearchResultsUpdating {
     func updateSearchResults(for searchController: UISearchController) {
         let input = searchController.searchBar.text ?? ""
+
+        // Enablement follows the field rather than the debounced query: waiting
+        // for the debounce leaves a window where the filter can be opened over a
+        // search that is about to start, and applying it would be a silent no-op.
+        filterItem.isEnabled = SearchText(input) == nil
+
         searchDebouncer.schedule { [weak self] in
             self?.applySearch(input)
         }

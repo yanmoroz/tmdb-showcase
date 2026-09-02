@@ -35,10 +35,13 @@ MVC-App/
 │   ├── AppConfig.swift              reads the TMDB token from Info.plist
 │   ├── Movies/
 │   │   ├── MoviesViewController.swift
+│   │   ├── MoviesFilterViewController.swift
+│   │   ├── MoviesFilter.swift
 │   │   └── MovieCell.swift
 │   ├── Common/
 │   │   ├── Debouncer.swift
 │   │   ├── ToastView.swift
+│   │   ├── MovieSortOption+Title.swift
 │   │   └── AppError+Message.swift
 │   ├── Info.plist
 │   └── Assets.xcassets
@@ -65,9 +68,17 @@ This is deliberately orthogonal to the pattern. Modelling state so illegal combi
 
 Empty states — loading, no results, and failure with a retry button — are built on `contentUnavailableConfiguration` (iOS 17+) rather than a bespoke view. A hand-rolled one was written and then deleted: UIKit covers all three first-party, and `searchConfiguration` will come in useful for empty search results. The SwiftUI TCA version will use `ContentUnavailableView`, so none of this needs to move into a shared UI package.
 
-Search reuses two things from the domain rather than reimplementing them. `SearchText`'s failable initialiser *is* the "blank input is no reason to hit the network" rule — `nil` means fall back to popular, and no whitespace trimming is written here. And because `MoviesQuery` is `Hashable`, deleting typed text back to what is already on screen compares equal and reloads nothing.
+Search reuses two things from the domain rather than reimplementing them. `SearchText`'s failable initialiser *is* the "blank input is no reason to hit the network" rule — `nil` means fall back to whatever the filter says, and no whitespace trimming is written here. And because `MoviesQuery` is `Hashable`, deleting typed text back to what is already on screen compares equal and reloads nothing.
 
 Debouncing lives in `Common/Debouncer.swift`, which cancels the previous piece of work inside `schedule`. Its interval is injected, so tests pass `.zero` and drain the main actor instead of waiting on wall-clock.
+
+The filter turns the screen's single input into two independent ones. `MoviesFilter` is what the user configured; the search text is what they typed; the query is derived from both, and `didSet` on each input is what keeps them from drifting. That is why a filter survives a search: clear the field after filtering by Horror and Horror comes back, not popular.
+
+The genre catalogue belongs to the filter screen rather than this one — nobody pays for that request unless the filter is opened, and a second loading state never layers over the movie list. `MoviesViewController` knows only the chosen `Genre.ID`. That screen models its own load on the same axis, with the task inside its `.loading` case.
+
+Routing is the plainest form available: the controller presents the modal itself and takes the result through a closure passed to the init. No coordinator, deliberately — that is the seam VIPER's Router and TCA's navigation state will differ on.
+
+Search and filter cannot combine, because TMDB's search endpoint accepts neither `with_genres` nor `sort_by` and `MoviesQuery` makes the combination unrepresentable. In the UI that shows up as the filter button being disabled while a search is active, rather than applying a filter silently discarding typed text.
 
 The tests in `MVC-AppTests` measure what that costs. To check pagination you have to stand the whole view up, find the `UICollectionView` by walking the hierarchy, and poll for an in-flight `Task` that is never exposed. Under MVP the same checks become a call to a presenter method.
 
@@ -75,4 +86,4 @@ Because a retain cycle is easy to introduce here — the controller holds a `Tas
 
 ## Status
 
-The list of popular movies is done: poster grid, pagination, loading / empty / failure states, a VPN toast on `.regionRestricted`, and pull-to-refresh. Search with debounce is done too — typing switches the query, clearing returns to popular, and empty results get the first-party search state. Next up is the genre filter, then the details screen.
+The list of popular movies is done: poster grid, pagination, loading / empty / failure states, a VPN toast on `.regionRestricted`, and pull-to-refresh. Search with debounce is done too — typing switches the query, clearing returns to whatever the filter says, and empty results get the first-party search state. The genre filter and sorting are in, behind a modal screen that owns the genre catalogue. Next up is the details screen.

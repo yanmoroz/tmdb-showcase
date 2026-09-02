@@ -129,7 +129,7 @@ final class MoviesViewControllerTests {
         #expect(sut.testCollectionView.numberOfItems(inSection: 0) == 6)
     }
 
-    // MARK: - Поиск
+    // MARK: - Search
 
     @Test("Введённый текст уходит в домен поисковым запросом")
     func typedTextBecomesSearchQuery() async throws {
@@ -152,7 +152,7 @@ final class MoviesViewControllerTests {
         sut.loadViewIfNeeded()
         try await waitUntil { await !fetchMovies.calls.isEmpty }
 
-        // Три нажатия подряд: промежуточные запросы уходить не должны.
+        // Three keystrokes in a row: the intermediate queries must not be sent.
         for text in ["d", "du", "dune"] {
             sut.simulateSearch(text)
         }
@@ -173,8 +173,8 @@ final class MoviesViewControllerTests {
         sut.simulateSearch(input)
         await drainPendingWork()
 
-        // SearchText отвергает пустой ввод, а .popular уже показан — повторять
-        // тот же запрос незачем.
+        // SearchText rejects blank input, and .popular is already on screen —
+        // repeating the same query is pointless.
         let calls = await fetchMovies.calls
         #expect(calls.map(\.query) == [.popular])
     }
@@ -206,7 +206,7 @@ final class MoviesViewControllerTests {
         sut.simulateSearch("dune")
         try await waitUntil { await fetchMovies.calls.count == 2 }
 
-        // Обрезка пробелов даёт тот же SearchText, значит и тот же MoviesQuery.
+        // Trimming whitespace yields the same SearchText, hence the same MoviesQuery.
         sut.simulateSearch("  dune  ")
         await drainPendingWork()
 
@@ -225,9 +225,119 @@ final class MoviesViewControllerTests {
         try await waitUntil { await fetchMovies.calls.count == 2 }
         let configuration = try #require(sut.currentUnavailableConfiguration)
 
-        // .search() пишет свой текст сам; наше «Фильмов нет» тут было бы враньём.
+        // .search() writes its own text; our «Фильмов нет» would be a lie here.
         #expect(configuration.text != "Фильмов нет")
         #expect(configuration.text != nil)
+    }
+
+    // MARK: - Filter
+
+    @Test("Выбор жанра даёт discover-запрос")
+    func genreProducesDiscoverQuery() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        sut.applyFilter(MoviesFilter(genreID: 28))
+        try await waitUntil { await fetchMovies.calls.count == 2 }
+
+        let calls = await fetchMovies.calls
+        #expect(calls.map(\.query) == [
+            .popular,
+            .discover(genreID: 28, sortedBy: .popularityDescending),
+        ])
+    }
+
+    @Test("Снятие жанра при сортировке по умолчанию возвращает популярное")
+    func clearingGenreReturnsToPopular() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        sut.applyFilter(MoviesFilter(genreID: 28))
+        try await waitUntil { await fetchMovies.calls.count == 2 }
+
+        // Not .discover(nil, .popularityDescending): the same result, but a
+        // needless request to a different endpoint.
+        sut.applyFilter(MoviesFilter())
+        try await waitUntil { await fetchMovies.calls.count == 3 }
+
+        let calls = await fetchMovies.calls
+        #expect(calls.map(\.query).last == .popular)
+    }
+
+    @Test("Сортировка без жанра всё же уходит в discover")
+    func sortWithoutGenreUsesDiscover() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        sut.applyFilter(MoviesFilter(genreID: nil, sort: .ratingDescending))
+        try await waitUntil { await fetchMovies.calls.count == 2 }
+
+        let calls = await fetchMovies.calls
+        #expect(calls.map(\.query).last == .discover(genreID: nil, sortedBy: .ratingDescending))
+    }
+
+    @Test("Фильтр переживает поиск")
+    func filterSurvivesSearch() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        sut.applyFilter(MoviesFilter(genreID: 28))
+        try await waitUntil { await fetchMovies.calls.count == 2 }
+
+        sut.simulateSearch("dune")
+        try await waitUntil { await fetchMovies.calls.count == 3 }
+
+        // Clearing the field returns to the chosen genre, not to popular.
+        sut.simulateSearch("")
+        try await waitUntil { await fetchMovies.calls.count == 4 }
+
+        let calls = await fetchMovies.calls
+        #expect(calls.map(\.query) == [
+            .popular,
+            .discover(genreID: 28, sortedBy: .popularityDescending),
+            .search(.fixture("dune")),
+            .discover(genreID: 28, sortedBy: .popularityDescending),
+        ])
+    }
+
+    @Test("Во время поиска кнопка фильтра недоступна")
+    func filterIsDisabledWhileSearching() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+        #expect(sut.navigationItem.rightBarButtonItem?.isEnabled == true)
+
+        // The domain forbids combining .search and .discover, so the filter must
+        // not be configurable mid-search: the typed text would vanish silently.
+        sut.simulateSearch("dune")
+        try await waitUntil { await fetchMovies.calls.count == 2 }
+        #expect(sut.navigationItem.rightBarButtonItem?.isEnabled == false)
+
+        sut.simulateSearch("")
+        try await waitUntil { await fetchMovies.calls.count == 3 }
+        #expect(sut.navigationItem.rightBarButtonItem?.isEnabled == true)
+    }
+
+    @Test("Кнопка фильтра выключается сразу, не дожидаясь debounce")
+    func disablesFilterBeforeDebounceFires() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        // Deliberately no suspension point after the input: the debounced task
+        // cannot have run, so this only passes if enablement follows the field.
+        sut.simulateSearch("dune")
+        #expect(sut.navigationItem.rightBarButtonItem?.isEnabled == false)
     }
 
     // MARK: - Factory
@@ -244,6 +354,7 @@ final class MoviesViewControllerTests {
         let fetchMovies = FetchMoviesStub(result: result)
         let sut = MoviesViewController(
             fetchMovies: fetchMovies,
+            fetchGenres: FetchGenresStub(),
             imageURLBuilder: TMDBImageURLBuilder(configuration: TMDBConfiguration(accessToken: "test")),
             // Zero interval keeps the debounce observable without waiting on
             // wall-clock: draining the main actor is enough to let it fire.
@@ -260,7 +371,7 @@ final class MoviesViewControllerTests {
 @MainActor
 private extension MoviesViewController {
     var testCollectionView: UICollectionView {
-        guard let collectionView = view.firstCollectionView else {
+        guard let collectionView = view.firstSubview(of: UICollectionView.self) else {
             preconditionFailure("MoviesViewController перестал содержать UICollectionView")
         }
         return collectionView
@@ -294,41 +405,5 @@ private extension MoviesViewController {
             willDisplay: UICollectionViewCell(),
             forItemAt: IndexPath(item: item, section: 0)
         )
-    }
-}
-
-/// Hands the main actor to whatever the controller may have enqueued.
-///
-/// Its load task inherits `MainActor` from the caller, so it cannot start while
-/// a `@MainActor` test body runs. Yielding gives it that chance without leaning
-/// on wall-clock time: a fixed sleep would let a slow machine hide a request
-/// that does get sent, just after the window closes.
-private func drainPendingWork(iterations: Int = 10) async {
-    for _ in 0..<iterations {
-        await Task.yield()
-    }
-}
-
-/// The controller's `Task` is not exposed, so waiting means polling state.
-private func waitUntil(
-    timeout: Duration = .seconds(2),
-    sourceLocation: SourceLocation = #_sourceLocation,
-    _ condition: () async -> Bool
-) async throws {
-    let deadline = ContinuousClock.now + timeout
-    while ContinuousClock.now < deadline {
-        if await condition() { return }
-        try await Task.sleep(for: .milliseconds(10))
-    }
-    Issue.record("Условие не выполнилось за \(timeout)", sourceLocation: sourceLocation)
-}
-
-private extension UIView {
-    var firstCollectionView: UICollectionView? {
-        if let collectionView = self as? UICollectionView { return collectionView }
-        for subview in subviews {
-            if let found = subview.firstCollectionView { return found }
-        }
-        return nil
     }
 }

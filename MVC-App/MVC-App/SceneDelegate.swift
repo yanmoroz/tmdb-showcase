@@ -36,10 +36,10 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     private func makeRoot() -> UIViewController {
         let configuration = AppConfig.tmdb
-        let repository = TMDBMoviesRepository(configuration: configuration)
 
         return MoviesViewController(
-            fetchMovies: FetchMovies(repository: repository),
+            fetchMovies: FetchMovies(repository: TMDBMoviesRepository(configuration: configuration)),
+            fetchGenres: FetchGenres(repository: TMDBGenresRepository(configuration: configuration)),
             imageURLBuilder: TMDBImageURLBuilder(configuration: configuration)
         )
     }
