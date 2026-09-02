@@ -18,7 +18,7 @@ final class MoviesFilterViewController: UIViewController {
 
         var title: String {
             switch self {
-            case .any: "Все"
+            case .any: "All"
             case .genre(let genre): genre.name
             }
         }
@@ -73,7 +73,7 @@ final class MoviesFilterViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Фильтр"
+        title = "Filter"
         view.backgroundColor = .systemGroupedBackground
         setUpSubviews()
         setUpNavigationItems()
@@ -129,11 +129,11 @@ final class MoviesFilterViewController: UIViewController {
     private func failureConfiguration(_ error: AppError) -> UIContentUnavailableConfiguration {
         var configuration = UIContentUnavailableConfiguration.empty()
         configuration.image = UIImage(systemName: "exclamationmark.triangle")
-        configuration.text = "Не удалось загрузить жанры"
+        configuration.text = "Couldn't load genres"
         configuration.secondaryText = error.message
 
         var button = UIButton.Configuration.borderless()
-        button.title = "Повторить"
+        button.title = "Retry"
         configuration.button = button
         configuration.buttonProperties.primaryAction = UIAction { [weak self] _ in
             self?.loadCatalogue()
@@ -161,7 +161,7 @@ final class MoviesFilterViewController: UIViewController {
             primaryAction: UIAction { [weak self] _ in self?.dismiss(animated: true) }
         )
         navigationItem.rightBarButtonItem = UIBarButtonItem(
-            title: "Применить",
+            title: "Apply",
             primaryAction: UIAction { [weak self] _ in self?.apply() }
         )
     }
@@ -198,8 +198,8 @@ extension MoviesFilterViewController: UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         switch Section.allCases[section] {
-        case .genre: "Жанр"
-        case .sort: "Сортировка"
+        case .genre: "Genre"
+        case .sort: "Sort"
         }
     }
 

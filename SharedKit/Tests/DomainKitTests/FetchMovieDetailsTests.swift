@@ -4,7 +4,7 @@ import DomainKitTestSupport
 
 @Suite("FetchMovieDetails")
 struct FetchMovieDetailsTests {
-    @Test("Идентификатор передаётся в репозиторий, детали возвращаются как есть")
+    @Test("The identifier reaches the repository and details come back untouched")
     func passesIDAndReturnsDetails() async throws {
         let expected = MovieDetails.fixture(id: 42, title: "Dune", runtime: 155)
         let repository = MoviesRepositoryStub(movieDetailsResult: .success(expected))
@@ -16,7 +16,7 @@ struct FetchMovieDetailsTests {
         await #expect(repository.movieDetailsCalls == [MovieDetailsCall(id: 42)])
     }
 
-    @Test("Отсутствующий фильм отдаёт notFound")
+    @Test("A missing movie yields notFound")
     func propagatesNotFound() async {
         let repository = MoviesRepositoryStub(movieDetailsResult: .failure(.notFound))
         let fetchDetails = FetchMovieDetails(repository: repository)

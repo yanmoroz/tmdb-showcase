@@ -4,7 +4,7 @@ import DomainKitTestSupport
 
 @Suite("FetchGenres")
 struct FetchGenresTests {
-    @Test("Жанры отдаются из репозитория одним вызовом")
+    @Test("Genres come from the repository in a single call")
     func returnsGenres() async throws {
         let repository = GenresRepositoryStub(genresResult: .success(Genre.fixtures))
         let fetchGenres = FetchGenres(repository: repository)
@@ -15,7 +15,7 @@ struct FetchGenresTests {
         await #expect(repository.genresCalls.count == 1)
     }
 
-    @Test("Ошибка справочника пробрасывается")
+    @Test("A catalogue error is propagated")
     func propagatesError() async {
         let repository = GenresRepositoryStub(genresResult: .failure(.unauthorized))
         let fetchGenres = FetchGenres(repository: repository)

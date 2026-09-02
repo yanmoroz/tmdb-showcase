@@ -70,6 +70,17 @@ The domain and data layers are shared by all six modules. The presentation layer
 
 The boundaries between layers, binding on all six implementations, are written down in [SharedKit/README.md](SharedKit/README.md). Notes specific to one module live in its own README, for instance [MVC-App/README.md](MVC-App/README.md).
 
+## Language
+
+Everything in this repository is in English: source, comments, README files, test
+names, and user-facing strings. The project started out mixing English code with
+Russian test names and UI copy; that is gone, and English is now the single rule.
+
+The app is deliberately not localised. There is one language and it is hard-coded,
+so `AppError.message`, screen titles and empty-state copy are plain literals rather
+than lookups in `Localizable.strings`. Adding localisation would mean six parallel
+string catalogues for no gain on the thing this repository is actually comparing.
+
 ## Stack
 
 - Swift 6 language mode, iOS 17+ (the floor for SwiftData)
@@ -82,7 +93,7 @@ The boundaries between layers, binding on all six implementations, are written d
 
 `DomainKit` and `DataKit` are done for the Movies feature: entities, `AppError`, the protocols and their TMDB implementations, error classification, the image URL builder, plus fixtures and stubs for tests.
 
-`MVC-App` has a working list of popular movies — a poster grid with pagination, error handling and pull-to-refresh. Next: search with debounce and the genre filter, then the details screen, then the remaining five architectures. Caching (SwiftData) and Watchlist come separately.
+`MVC-App` has a working Movies screen: a poster grid with pagination, error handling and pull-to-refresh, search with debounce, and a modal screen for the genre filter and sort order. Next: the details screen, then the remaining five architectures. Caching (SwiftData) and Watchlist come separately.
 
 ## Setting up
 

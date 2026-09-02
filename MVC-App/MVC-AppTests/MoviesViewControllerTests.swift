@@ -17,13 +17,13 @@ final class MoviesViewControllerTests {
         if let trackedLocation {
             #expect(
                 trackedSUT == nil,
-                "Контроллер пережил тест — вероятен цикл удержания",
+                "The controller outlived the test — likely a retain cycle",
                 sourceLocation: trackedLocation
             )
         }
     }
 
-    @Test("Загруженная страница попадает в коллекцию")
+    @Test("A loaded page reaches the collection view")
     func showsLoadedPage() async throws {
         let page = Page.fixture(items: Movie.fixtures(count: 8), totalPages: 3)
         let (sut, _) = makeSUT(result: .success(page))
@@ -35,7 +35,7 @@ final class MoviesViewControllerTests {
         try await waitUntil { sut.testCollectionView.numberOfItems(inSection: 0) == 8 }
     }
 
-    @Test("Первая страница запрашивается с номером 1")
+    @Test("The first page is requested as page 1")
     func requestsFirstPage() async throws {
         let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 4))))
 
@@ -46,7 +46,7 @@ final class MoviesViewControllerTests {
         #expect(calls == [MoviesCall(query: .popular, page: 1)])
     }
 
-    @Test("Ошибка не наполняет коллекцию")
+    @Test("A failure leaves the collection empty")
     func keepsCollectionEmptyOnFailure() async throws {
         let (sut, fetchMovies) = makeSUT(result: .failure(.regionRestricted))
 
@@ -56,7 +56,7 @@ final class MoviesViewControllerTests {
         #expect(sut.testCollectionView.numberOfItems(inSection: 0) == 0)
     }
 
-    @Test("Показ ячейки у конца списка догружает следующую страницу")
+    @Test("Displaying a cell near the end loads the next page")
     func loadsNextPageNearEnd() async throws {
         let page = Page.fixture(items: Movie.fixtures(count: 20), totalPages: 5)
         let (sut, fetchMovies) = makeSUT(result: .success(page))
@@ -71,7 +71,7 @@ final class MoviesViewControllerTests {
         #expect(calls.map(\.page) == [1, 2])
     }
 
-    @Test("Повторяемая ошибка даёт кнопку повтора")
+    @Test("A retryable error offers a retry button")
     func offersRetryForRetryableError() async throws {
         let (sut, fetchMovies) = makeSUT(result: .failure(.network(.offline)))
 
@@ -79,11 +79,11 @@ final class MoviesViewControllerTests {
         try await waitUntil { await !fetchMovies.calls.isEmpty }
         let configuration = try #require(sut.currentUnavailableConfiguration)
 
-        #expect(configuration.button.title == "Повторить")
+        #expect(configuration.button.title == "Retry")
         #expect(configuration.secondaryText == AppError.network(.offline).message)
     }
 
-    @Test("Гео-блокировка кнопку повтора не предлагает")
+    @Test("A region block offers no retry button")
     func hidesRetryForRegionRestricted() async throws {
         let (sut, fetchMovies) = makeSUT(result: .failure(.regionRestricted))
 
@@ -97,7 +97,7 @@ final class MoviesViewControllerTests {
         #expect(configuration.button.title == nil)
     }
 
-    @Test("Отмена не оставляет экран на вечном спиннере")
+    @Test("Cancellation does not leave the screen spinning forever")
     func escapesLoadingOnCancellation() async throws {
         let (sut, fetchMovies) = makeSUT(result: .failure(.cancelled))
 
@@ -107,11 +107,11 @@ final class MoviesViewControllerTests {
 
         // The .loading spinner has no exit of its own: leaving the state
         // untouched on cancellation strands the user on it forever.
-        #expect(configuration.text == "Не удалось загрузить")
-        #expect(configuration.button.title == "Повторить")
+        #expect(configuration.text == "Couldn't load")
+        #expect(configuration.button.title == "Retry")
     }
 
-    @Test("За последней страницей продолжения не запрашивается")
+    @Test("Nothing is requested past the last page")
     func stopsAtLastPage() async throws {
         let page = Page.fixture(items: Movie.fixtures(count: 6), totalPages: 1)
         let (sut, fetchMovies) = makeSUT(result: .success(page))
@@ -131,7 +131,7 @@ final class MoviesViewControllerTests {
 
     // MARK: - Search
 
-    @Test("Введённый текст уходит в домен поисковым запросом")
+    @Test("Typed text reaches the domain as a search query")
     func typedTextBecomesSearchQuery() async throws {
         let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
 
@@ -145,7 +145,7 @@ final class MoviesViewControllerTests {
         #expect(calls.map(\.query) == [.popular, .search(.fixture("dune"))])
     }
 
-    @Test("Быстрый набор даёт один запрос с последним текстом")
+    @Test("Rapid typing collapses to one request with the last text")
     func rapidTypingCollapsesToLastQuery() async throws {
         let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
 
@@ -163,7 +163,7 @@ final class MoviesViewControllerTests {
         #expect(calls.map(\.query) == [.popular, .search(.fixture("dune"))])
     }
 
-    @Test("Пустой ввод не идёт в сеть поиском", arguments: ["", "   ", "\n\t"])
+    @Test("Blank input never becomes a search request", arguments: ["", "   ", "\n\t"])
     func blankInputStaysOnPopular(input: String) async throws {
         let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
 
@@ -179,7 +179,7 @@ final class MoviesViewControllerTests {
         #expect(calls.map(\.query) == [.popular])
     }
 
-    @Test("Очистка поля возвращает популярное")
+    @Test("Clearing the field returns to popular")
     func clearingSearchReturnsToPopular() async throws {
         let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
 
@@ -196,7 +196,7 @@ final class MoviesViewControllerTests {
         #expect(calls.map(\.query) == [.popular, .search(.fixture("dune")), .popular])
     }
 
-    @Test("Повторный ввод того же текста не перезапрашивает")
+    @Test("Retyping the same text does not reload")
     func repeatingSameTextDoesNotReload() async throws {
         let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
 
@@ -214,7 +214,7 @@ final class MoviesViewControllerTests {
         #expect(calls.count == 2)
     }
 
-    @Test("Пустая выдача поиска показывает первостороннее состояние")
+    @Test("Empty search results show the first-party state")
     func emptySearchShowsSearchConfiguration() async throws {
         let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: [])))
 
@@ -225,14 +225,14 @@ final class MoviesViewControllerTests {
         try await waitUntil { await fetchMovies.calls.count == 2 }
         let configuration = try #require(sut.currentUnavailableConfiguration)
 
-        // .search() writes its own text; our «Фильмов нет» would be a lie here.
-        #expect(configuration.text != "Фильмов нет")
+        // .search() writes its own text; our "No movies" would be a lie here.
+        #expect(configuration.text != "No movies")
         #expect(configuration.text != nil)
     }
 
     // MARK: - Filter
 
-    @Test("Выбор жанра даёт discover-запрос")
+    @Test("Choosing a genre produces a discover query")
     func genreProducesDiscoverQuery() async throws {
         let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
 
@@ -249,7 +249,7 @@ final class MoviesViewControllerTests {
         ])
     }
 
-    @Test("Снятие жанра при сортировке по умолчанию возвращает популярное")
+    @Test("Clearing the genre under the default sort returns to popular")
     func clearingGenreReturnsToPopular() async throws {
         let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
 
@@ -268,7 +268,7 @@ final class MoviesViewControllerTests {
         #expect(calls.map(\.query).last == .popular)
     }
 
-    @Test("Сортировка без жанра всё же уходит в discover")
+    @Test("Sorting without a genre still goes to discover")
     func sortWithoutGenreUsesDiscover() async throws {
         let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
 
@@ -282,7 +282,7 @@ final class MoviesViewControllerTests {
         #expect(calls.map(\.query).last == .discover(genreID: nil, sortedBy: .ratingDescending))
     }
 
-    @Test("Фильтр переживает поиск")
+    @Test("The filter survives a search")
     func filterSurvivesSearch() async throws {
         let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
 
@@ -308,7 +308,7 @@ final class MoviesViewControllerTests {
         ])
     }
 
-    @Test("Во время поиска кнопка фильтра недоступна")
+    @Test("The filter button is disabled during a search")
     func filterIsDisabledWhileSearching() async throws {
         let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
 
@@ -327,7 +327,7 @@ final class MoviesViewControllerTests {
         #expect(sut.navigationItem.rightBarButtonItem?.isEnabled == true)
     }
 
-    @Test("Кнопка фильтра выключается сразу, не дожидаясь debounce")
+    @Test("The filter button is disabled before the debounce fires")
     func disablesFilterBeforeDebounceFires() async throws {
         let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
 
@@ -372,7 +372,7 @@ final class MoviesViewControllerTests {
 private extension MoviesViewController {
     var testCollectionView: UICollectionView {
         guard let collectionView = view.firstSubview(of: UICollectionView.self) else {
-            preconditionFailure("MoviesViewController перестал содержать UICollectionView")
+            preconditionFailure("MoviesViewController stopped containing a UICollectionView")
         }
         return collectionView
     }

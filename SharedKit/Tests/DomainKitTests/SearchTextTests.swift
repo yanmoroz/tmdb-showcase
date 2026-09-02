@@ -6,7 +6,7 @@ struct SearchTextTests {
     // The "no blank search hits the network" rule is held by the type: TMDB
     // requires `query`, and presentation does the input validation.
 
-    @Test("Пустой ввод не даёт поискового запроса", arguments: [
+    @Test("Blank input yields no search query", arguments: [
         "",
         " ",
         "   ",
@@ -18,18 +18,18 @@ struct SearchTextTests {
         #expect(SearchText(input) == nil)
     }
 
-    @Test("Пробелы по краям обрезаются")
+    @Test("Surrounding whitespace is trimmed")
     func trimsSurroundingWhitespace() {
         #expect(SearchText("  dune  ")?.rawValue == "dune")
         #expect(SearchText("\n dune \t")?.rawValue == "dune")
     }
 
-    @Test("Пробелы внутри запроса сохраняются")
+    @Test("Whitespace inside the query is preserved")
     func keepsInnerWhitespace() {
         #expect(SearchText("  blade runner  ")?.rawValue == "blade runner")
     }
 
-    @Test("Запросы, отличающиеся только внешними пробелами, совпадают")
+    @Test("Queries differing only in outer whitespace are equal")
     func trimmedInputsAreEqual() {
         let lhs = SearchText("dune")
         let rhs = SearchText("  dune ")
@@ -38,7 +38,7 @@ struct SearchTextTests {
         #expect(Set([lhs, rhs]).count == 1)
     }
 
-    @Test("Регистр значим — это разные запросы")
+    @Test("Case is significant — these are different queries")
     func caseIsSignificant() {
         #expect(SearchText("dune") != SearchText("Dune"))
     }

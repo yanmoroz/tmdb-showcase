@@ -4,7 +4,7 @@ import DomainKit
 import DomainKitTestSupport
 @testable import DataKit
 
-@Suite("Декодирование ответов TMDB")
+@Suite("Decoding TMDB responses")
 struct DecodingTests {
     private func decodePage() throws -> Page<Movie> {
         let dto = try JSONDecoder.tmdb.decode(
@@ -14,7 +14,7 @@ struct DecodingTests {
         return dto.toDomain { $0.toDomain() }
     }
 
-    @Test("Список фильмов разбирается в доменные сущности")
+    @Test("A movie list decodes into domain entities")
     func decodesMovieList() throws {
         let page = try decodePage()
         let first = try #require(page.items.first)
@@ -27,7 +27,7 @@ struct DecodingTests {
         #expect(first.genreIDs == [28, 878])
     }
 
-    @Test("Дата релиза разбирается из yyyy-MM-dd")
+    @Test("The release date decodes from yyyy-MM-dd")
     func decodesReleaseDate() throws {
         let releaseDate = try #require(try decodePage().items.first?.releaseDate)
         let components = Calendar(identifier: .gregorian).dateComponents(
@@ -40,7 +40,7 @@ struct DecodingTests {
         #expect(components.day == 27)
     }
 
-    @Test("Пустая строка даты становится nil, а не роняет страницу")
+    @Test("An empty date string becomes nil rather than failing the page")
     func emptyReleaseDateBecomesNil() throws {
         let page = try decodePage()
 
@@ -48,7 +48,7 @@ struct DecodingTests {
         #expect(page.items.count == 2)
     }
 
-    @Test("Отсутствующие поля подменяются, запись не теряется")
+    @Test("Missing fields are defaulted, the record is not dropped")
     func toleratesMissingFields() throws {
         let sparse = try #require(try decodePage().items.last)
 
@@ -60,7 +60,7 @@ struct DecodingTests {
         #expect(sparse.posterPath == nil)
     }
 
-    @Test("totalPages зажимается до предела TMDB")
+    @Test("totalPages is clamped to the TMDB ceiling")
     func clampsTotalPages() throws {
         let page = try decodePage()
 
@@ -71,7 +71,7 @@ struct DecodingTests {
         #expect(page.page == 1)
     }
 
-    @Test("Детали фильма разбираются целиком")
+    @Test("Movie details decode in full")
     func decodesMovieDetails() throws {
         let details = try JSONDecoder.tmdb
             .decode(MovieDetailsDTO.self, from: try TestFixtures.data("movie_details"))
@@ -86,7 +86,7 @@ struct DecodingTests {
         #expect(details.homepage == URL(string: "https://www.foxmovies.com/movies/fight-club"))
     }
 
-    @Test("Пустые строки деталей становятся nil, а не пустыми значениями")
+    @Test("Empty detail strings become nil rather than empty values")
     func emptyDetailStringsBecomeNil() throws {
         let details = try JSONDecoder.tmdb
             .decode(MovieDetailsDTO.self, from: try TestFixtures.data("movie_details_sparse"))
@@ -101,7 +101,7 @@ struct DecodingTests {
         #expect(details.originalTitle == "Sparse Movie")
     }
 
-    @Test("Справочник жанров разбирается из обёртки")
+    @Test("The genre catalogue decodes out of its wrapper")
     func decodesGenres() throws {
         let genres = try JSONDecoder.tmdb
             .decode(GenreListDTO.self, from: try TestFixtures.data("genres"))

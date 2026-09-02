@@ -11,7 +11,7 @@ struct MoviesRepositoryTests {
         return (TMDBMoviesRepository(configuration: .test, session: stub.session), stub)
     }
 
-    @Test("Страница проходит весь путь от JSON до домена")
+    @Test("A page travels the whole way from JSON to the domain")
     func loadsPage() async throws {
         let (repository, _) = makeRepository(.json(try TestFixtures.data("popular_page1")))
 
@@ -22,7 +22,7 @@ struct MoviesRepositoryTests {
         #expect(page.totalPages == 500)
     }
 
-    @Test("Запрошенный URL собирается из доменного запроса")
+    @Test("The requested URL is built from the domain query")
     func buildsRequestURL() async throws {
         let (repository, stub) = makeRepository(.json(try TestFixtures.data("popular_page1")))
 
@@ -33,7 +33,7 @@ struct MoviesRepositoryTests {
         #expect(request.url?.query()?.contains("page=3") == true)
     }
 
-    @Test("Заголовок авторизации доезжает до транспорта")
+    @Test("The authorization header reaches the transport")
     func sendsAuthorizationHeader() async throws {
         let (repository, stub) = makeRepository(.json(try TestFixtures.data("popular_page1")))
 
@@ -43,7 +43,7 @@ struct MoviesRepositoryTests {
         #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer test-token")
     }
 
-    @Test("Детали фильма запрашиваются по идентификатору")
+    @Test("Movie details are requested by identifier")
     func loadsDetails() async throws {
         let (repository, stub) = makeRepository(.json(try TestFixtures.data("movie_details")))
 
@@ -53,7 +53,7 @@ struct MoviesRepositoryTests {
         #expect(stub.lastRequest?.url?.path() == "/3/movie/550")
     }
 
-    @Test("Отсутствующий фильм отдаёт notFound")
+    @Test("A missing movie yields notFound")
     func mapsNotFound() async {
         let (repository, _) = makeRepository(.status(404))
 
@@ -62,7 +62,7 @@ struct MoviesRepositoryTests {
         }
     }
 
-    @Test("Гео-блокировка отдаёт regionRestricted")
+    @Test("A region block yields regionRestricted")
     func mapsRegionRestricted() async {
         let (repository, _) = makeRepository(.status(403))
 
@@ -71,7 +71,7 @@ struct MoviesRepositoryTests {
         }
     }
 
-    @Test("Обрыв связи отдаёт network(.offline)")
+    @Test("A dropped connection yields network(.offline)")
     func mapsTransportFailure() async {
         let (repository, _) = makeRepository(.transport(.notConnectedToInternet))
 
@@ -80,7 +80,7 @@ struct MoviesRepositoryTests {
         }
     }
 
-    @Test("Битый JSON отдаёт decoding, а не unknown")
+    @Test("Malformed JSON yields decoding, not unknown")
     func mapsDecodingFailure() async {
         let (repository, _) = makeRepository(.json(Data(#"{"unexpected": true}"#.utf8)))
 
@@ -92,7 +92,7 @@ struct MoviesRepositoryTests {
 
 @Suite("TMDBGenresRepository")
 struct GenresRepositoryTests {
-    @Test("Справочник жанров проходит путь до домена")
+    @Test("The genre catalogue travels through to the domain")
     func loadsGenres() async throws {
         let stub = StubURLProtocol.makeSession(.json(try TestFixtures.data("genres")))
         let repository = TMDBGenresRepository(configuration: .test, session: stub.session)
@@ -108,7 +108,7 @@ struct GenresRepositoryTests {
 struct ImageURLBuilderTests {
     private let builder = TMDBImageURLBuilder(configuration: .test)
 
-    @Test("Относительный путь превращается в URL нужного размера")
+    @Test("A relative path becomes a URL of the requested size")
     func buildsPosterURL() {
         #expect(
             builder.posterURL(path: "/poster1.jpg", size: .w342)
@@ -116,7 +116,7 @@ struct ImageURLBuilderTests {
         )
     }
 
-    @Test("Backdrop собирается своим набором размеров")
+    @Test("Backdrops are built from their own size set")
     func buildsBackdropURL() {
         #expect(
             builder.backdropURL(path: "/backdrop1.jpg", size: .original)
@@ -124,7 +124,7 @@ struct ImageURLBuilderTests {
         )
     }
 
-    @Test("Отсутствующий путь не даёт URL", arguments: [nil, ""])
+    @Test("A missing path yields no URL", arguments: [nil, ""])
     func returnsNilWithoutPath(path: String?) {
         #expect(builder.posterURL(path: path) == nil)
         #expect(builder.backdropURL(path: path) == nil)

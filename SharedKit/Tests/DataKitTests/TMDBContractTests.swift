@@ -18,7 +18,7 @@ struct TMDBContractTests {
         TMDBMoviesRepository(configuration: LiveTMDB.configuration)
     }
 
-    @Test("Формат списка и обёртки пагинации не изменился")
+    @Test("The list format and pagination wrapper have not changed")
     func popularStillDecodes() async throws {
         let page = try await movies.movies(query: .popular, page: 1)
 
@@ -28,7 +28,7 @@ struct TMDBContractTests {
         #expect(page.items.allSatisfy { !$0.title.isEmpty })
     }
 
-    @Test("Строки sort_by всё ещё принимаются", arguments: MovieSortOption.allCases)
+    @Test("The sort_by strings are still accepted", arguments: MovieSortOption.allCases)
     func discoverAcceptsSortOption(option: MovieSortOption) async throws {
         // A stale string yields 422, which the classifier collapses into .unknown.
         let page = try await movies.movies(
@@ -39,7 +39,7 @@ struct TMDBContractTests {
         #expect(!page.items.isEmpty)
     }
 
-    @Test("Формат деталей не изменился")
+    @Test("The details format has not changed")
     func detailsStillDecode() async throws {
         let details = try await movies.movieDetails(id: 550)
 
@@ -48,7 +48,7 @@ struct TMDBContractTests {
         #expect(!details.genres.isEmpty)
     }
 
-    @Test("Справочник жанров на месте")
+    @Test("The genre catalogue is still there")
     func genresStillDecode() async throws {
         let repository = TMDBGenresRepository(configuration: LiveTMDB.configuration)
 
@@ -57,7 +57,7 @@ struct TMDBContractTests {
         #expect(genres.contains(Genre(id: 28, name: "Action")))
     }
 
-    @Test("Поиск принимает параметр query")
+    @Test("Search accepts the query parameter")
     func searchStillWorks() async throws {
         let page = try await movies.movies(query: .search(.fixture("dune")), page: 1)
 

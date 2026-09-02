@@ -4,27 +4,27 @@ extension AppError {
     var message: String {
         switch self {
         case .regionRestricted:
-            "TMDB недоступен из вашего региона. Включите VPN и повторите."
+            "TMDB is not available in your region. Turn on a VPN and try again."
         case .unauthorized:
-            "Ключ доступа к TMDB не принят. Проверьте Config.xcconfig."
+            "TMDB rejected the access key. Check Config.xcconfig."
         case .notFound:
-            "Фильм не найден."
+            "Movie not found."
         case .rateLimited:
-            "Слишком много запросов. Попробуйте через минуту."
+            "Too many requests. Try again in a minute."
         case .server:
-            "Сервис TMDB временно недоступен."
+            "TMDB is temporarily unavailable."
         case .network(.offline):
-            "Нет соединения с интернетом."
+            "No internet connection."
         case .network(.timedOut):
-            "Сервер не ответил вовремя."
+            "The server did not respond in time."
         case .network(.cannotConnect), .network(.other):
-            "Не удалось связаться с сервером."
+            "Could not reach the server."
         case .decoding:
-            "Сервер вернул неожиданный ответ."
+            "The server returned an unexpected response."
         case .cancelled:
-            "Запрос отменён."
+            "Request cancelled."
         case .unknown:
-            "Что-то пошло не так."
+            "Something went wrong."
         }
     }
 }

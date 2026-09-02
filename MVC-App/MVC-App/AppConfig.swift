@@ -16,8 +16,8 @@ enum AppConfig {
         else {
             fatalError(
                 """
-                TMDB_ACCESS_TOKEN не задан. Скопируйте Config.xcconfig.example в Config.xcconfig \
-                и подставьте v4 Read Access Token: themoviedb.org → Settings → API.
+                TMDB_ACCESS_TOKEN is not set. Copy Config.xcconfig.example to Config.xcconfig \
+                and paste your v4 Read Access Token: themoviedb.org → Settings → API.
                 """
             )
         }

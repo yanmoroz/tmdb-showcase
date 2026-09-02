@@ -7,7 +7,7 @@ struct MoviesQueryTests {
     // Equality and hashing are part of the contract: they discard a stale
     // load's result, and TCA keeps the query in State.
 
-    @Test("Запросы с разными параметрами не равны")
+    @Test("Queries with different parameters are not equal")
     func distinctQueriesDiffer() {
         #expect(MoviesQuery.popular != .trending(.day))
         #expect(MoviesQuery.trending(.day) != .trending(.week))
@@ -22,7 +22,7 @@ struct MoviesQueryTests {
         )
     }
 
-    @Test("Запросы с одинаковыми параметрами совпадают и по значению, и по хешу")
+    @Test("Queries with identical parameters match by value and by hash")
     func equalQueriesShareHash() {
         let lhs = MoviesQuery.discover(genreID: 28, sortedBy: .ratingDescending)
         let rhs = MoviesQuery.discover(genreID: 28, sortedBy: .ratingDescending)
@@ -31,7 +31,7 @@ struct MoviesQueryTests {
         #expect(Set([lhs, rhs]).count == 1)
     }
 
-    @Test("Фильтр без выбранного жанра отличается от фильтра с жанром")
+    @Test("A filter with no genre differs from one with a genre")
     func nilGenreIsDistinct() {
         #expect(
             MoviesQuery.discover(genreID: nil, sortedBy: .popularityDescending)

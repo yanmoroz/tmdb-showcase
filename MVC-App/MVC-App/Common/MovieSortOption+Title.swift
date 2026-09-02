@@ -5,10 +5,10 @@ extension MovieSortOption {
     /// strings — so the user-facing names are written here.
     var title: String {
         switch self {
-        case .popularityDescending: "По популярности"
-        case .ratingDescending: "По рейтингу"
-        case .releaseDateDescending: "Сначала новые"
-        case .titleAscending: "По названию"
+        case .popularityDescending: "Most popular"
+        case .ratingDescending: "Highest rated"
+        case .releaseDateDescending: "Newest first"
+        case .titleAscending: "Title (A–Z)"
         }
     }
 }

@@ -96,7 +96,7 @@ final class MoviesViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Фильмы"
+        title = "Movies"
         view.backgroundColor = .systemBackground
         setUpSubviews()
         setUpSearch()
@@ -240,22 +240,22 @@ final class MoviesViewController: UIViewController {
     private func emptyConfiguration() -> UIContentUnavailableConfiguration {
         var configuration = UIContentUnavailableConfiguration.empty()
         configuration.image = UIImage(systemName: "film")
-        configuration.text = "Фильмов нет"
-        configuration.secondaryText = "TMDB не вернул ни одной записи."
+        configuration.text = "No movies"
+        configuration.secondaryText = "TMDB returned no entries."
         return configuration
     }
 
     private func failureConfiguration(_ error: AppError) -> UIContentUnavailableConfiguration {
         var configuration = UIContentUnavailableConfiguration.empty()
         configuration.image = UIImage(systemName: "exclamationmark.triangle")
-        configuration.text = "Не удалось загрузить"
+        configuration.text = "Couldn't load"
         configuration.secondaryText = error.message
 
         // Cancellation is not transient, so isRetryable leaves it out. Retrying
         // is still the only useful action left: nothing was loaded.
         if error.isRetryable || error == .cancelled {
             var button = UIButton.Configuration.borderless()
-            button.title = "Повторить"
+            button.title = "Retry"
             configuration.button = button
             configuration.buttonProperties.primaryAction = UIAction { [weak self] _ in
                 self?.reload()
@@ -272,7 +272,7 @@ final class MoviesViewController: UIViewController {
         // Results are drawn in the same list, so dimming it on focus would hide
         // the very thing the search is filtering.
         searchController.obscuresBackgroundDuringPresentation = false
-        searchController.searchBar.placeholder = "Поиск фильмов"
+        searchController.searchBar.placeholder = "Search movies"
         // Film titles are proper nouns in every language TMDB carries, so the
         // keyboard must not second-guess them.
         searchController.searchBar.autocapitalizationType = .none

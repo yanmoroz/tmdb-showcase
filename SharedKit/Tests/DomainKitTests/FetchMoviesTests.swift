@@ -6,7 +6,7 @@ import DomainKitTestSupport
 struct FetchMoviesTests {
     // No validation here on purpose — it lives in presentation, see SearchTextTests.
 
-    @Test("Запрос уходит в репозиторий без изменений", arguments: [
+    @Test("The query reaches the repository unchanged", arguments: [
         MoviesQuery.popular,
         MoviesQuery.trending(.day),
         MoviesQuery.trending(.week),
@@ -24,7 +24,7 @@ struct FetchMoviesTests {
         #expect(calls == [MoviesCall(query: query, page: 2)])
     }
 
-    @Test("Страница репозитория возвращается как есть")
+    @Test("The repository page is returned as is")
     func returnsRepositoryPage() async throws {
         let expected = Page.fixture(items: Movie.fixtures(count: 20), page: 2, totalPages: 5, totalResults: 100)
         let repository = MoviesRepositoryStub(moviesResult: .success(expected))
@@ -35,7 +35,7 @@ struct FetchMoviesTests {
         #expect(page == expected)
     }
 
-    @Test("Ошибка репозитория пробрасывается неизменной")
+    @Test("A repository error is propagated unchanged")
     func propagatesError() async {
         let repository = MoviesRepositoryStub(moviesResult: .failure(.regionRestricted))
         let fetchMovies = FetchMovies(repository: repository)
@@ -45,7 +45,7 @@ struct FetchMoviesTests {
         }
     }
 
-    @Test("Ошибка не подменяется и для поиска")
+    @Test("The error is not substituted for search either")
     func propagatesErrorForSearch() async {
         let repository = MoviesRepositoryStub(moviesResult: .failure(.network(.offline)))
         let fetchMovies = FetchMovies(repository: repository)

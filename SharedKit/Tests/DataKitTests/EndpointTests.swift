@@ -17,7 +17,7 @@ struct EndpointTests {
         )
     }
 
-    @Test("Каждый кейс запроса идёт по своему пути TMDB", arguments: [
+    @Test("Every query case maps to its own TMDB path", arguments: [
         (MoviesQuery.popular, "/3/movie/popular"),
         (MoviesQuery.trending(.day), "/3/trending/movie/day"),
         (MoviesQuery.trending(.week), "/3/trending/movie/week"),
@@ -28,7 +28,7 @@ struct EndpointTests {
         #expect(url(query).path() == expectedPath)
     }
 
-    @Test("Токен уходит Bearer-заголовком, а не параметром запроса")
+    @Test("The token travels as a Bearer header, not a query parameter")
     func sendsBearerToken() {
         let request = MoviesQuery.popular.endpoint(page: 1).urlRequest(.test)
 
@@ -36,12 +36,12 @@ struct EndpointTests {
         #expect(request.url?.query()?.contains("api_key") != true)
     }
 
-    @Test("Поисковый текст уходит параметром query")
+    @Test("Search text travels as the query parameter")
     func sendsSearchText() {
         #expect(queryItems(.search(.fixture("blade runner")))["query"] == "blade runner")
     }
 
-    @Test("Поиск не подмешивает with_genres и sort_by")
+    @Test("Search adds neither with_genres nor sort_by")
     func searchCarriesNoDiscoverParameters() {
         let items = queryItems(.search(.fixture("dune")))
 
@@ -49,7 +49,7 @@ struct EndpointTests {
         #expect(items["sort_by"] == nil)
     }
 
-    @Test("Сортировки маппятся в строки TMDB", arguments: [
+    @Test("Sort options map to TMDB strings", arguments: [
         (MovieSortOption.popularityDescending, "popularity.desc"),
         (MovieSortOption.ratingDescending, "vote_average.desc"),
         (MovieSortOption.releaseDateDescending, "primary_release_date.desc"),
@@ -59,19 +59,19 @@ struct EndpointTests {
         #expect(queryItems(.discover(genreID: nil, sortedBy: option))["sort_by"] == expected)
     }
 
-    @Test("Фильтр по жанру уходит в with_genres, а без жанра параметра нет")
+    @Test("A genre filter becomes with_genres, and without one the parameter is absent")
     func sendsGenreFilterOnlyWhenSet() {
         #expect(queryItems(.discover(genreID: 28, sortedBy: .popularityDescending))["with_genres"] == "28")
         #expect(queryItems(.discover(genreID: nil, sortedBy: .popularityDescending))["with_genres"] == nil)
     }
 
-    @Test("Сортировка по рейтингу добавляет порог голосов")
+    @Test("Sorting by rating adds a vote-count threshold")
     func ratingSortAddsVoteFloor() {
         #expect(queryItems(.discover(genreID: nil, sortedBy: .ratingDescending))["vote_count.gte"] == "200")
         #expect(queryItems(.discover(genreID: nil, sortedBy: .titleAscending))["vote_count.gte"] == nil)
     }
 
-    @Test("Номер страницы зажимается в 1...500", arguments: [
+    @Test("The page number is clamped to 1...500", arguments: [
         (900, "500"),
         (501, "500"),
         (500, "500"),

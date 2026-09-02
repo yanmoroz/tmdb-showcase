@@ -26,7 +26,7 @@ func waitUntil(
         if await condition() { return }
         try await Task.sleep(for: .milliseconds(10))
     }
-    Issue.record("Условие не выполнилось за \(timeout)", sourceLocation: sourceLocation)
+    Issue.record("Condition was not met within \(timeout)", sourceLocation: sourceLocation)
 }
 
 /// Captures a callback result without the closure retaining the test suite.

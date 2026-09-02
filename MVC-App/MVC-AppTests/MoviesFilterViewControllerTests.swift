@@ -14,13 +14,13 @@ final class MoviesFilterViewControllerTests {
         if let trackedLocation {
             #expect(
                 trackedSUT == nil,
-                "Контроллер фильтра пережил тест — вероятен цикл удержания",
+                "The filter controller outlived the test — likely a retain cycle",
                 sourceLocation: trackedLocation
             )
         }
     }
 
-    @Test("Каталог загружается и добавляет строку «Все» над жанрами")
+    @Test("The catalogue loads and puts an \"All\" row above the genres")
     func loadsCatalogueWithAnyGenreRow() async throws {
         let (sut, fetchGenres, _) = makeSUT()
 
@@ -28,28 +28,28 @@ final class MoviesFilterViewControllerTests {
         try await waitUntil { await !fetchGenres.calls.isEmpty }
         try await waitUntil { sut.testTableView.numberOfRows(inSection: 0) == Genre.fixtures.count + 1 }
 
-        #expect(sut.title(forRowAt: IndexPath(row: 0, section: 0)) == "Все")
+        #expect(sut.title(forRowAt: IndexPath(row: 0, section: 0)) == "All")
         #expect(sut.title(forRowAt: IndexPath(row: 1, section: 0)) == "Action")
 
-        // No genre chosen, so the tick belongs to «Все» — the nil == nil arm of
+        // No genre chosen, so the tick belongs to "All" — the nil == nil arm of
         // the comparison, which nothing else observes.
         #expect(sut.accessoryType(forRowAt: IndexPath(row: 0, section: 0)) == .checkmark)
         #expect(sut.accessoryType(forRowAt: IndexPath(row: 1, section: 0)) == .none)
     }
 
-    @Test("Галочка стоит у заранее выбранного жанра")
+    @Test("The tick sits on a preselected genre")
     func checksPreselectedGenre() async throws {
         let (sut, _, _) = makeSUT(selection: MoviesFilter(genreID: 35))
 
         sut.loadViewIfNeeded()
         try await waitUntil { sut.testTableView.numberOfRows(inSection: 0) == Genre.fixtures.count + 1 }
 
-        // Comedy is fixture 35, at row 2 once «Все» takes row 0.
+        // Comedy is fixture 35, at row 2 once "All" takes row 0.
         #expect(sut.accessoryType(forRowAt: IndexPath(row: 2, section: 0)) == .checkmark)
         #expect(sut.accessoryType(forRowAt: IndexPath(row: 0, section: 0)) == .none)
     }
 
-    @Test("Сортировки показаны все и не зависят от каталога")
+    @Test("Every sort option is shown, independent of the catalogue")
     func showsEverySortOption() async throws {
         let (sut, fetchGenres, _) = makeSUT(genres: .failure(.network(.offline)))
 
@@ -60,14 +60,14 @@ final class MoviesFilterViewControllerTests {
         #expect(sut.testTableView.numberOfRows(inSection: 1) == MovieSortOption.allCases.count)
     }
 
-    @Test("Отказ каталога даёт кнопку повтора, повтор перезапрашивает")
+    @Test("A failed catalogue offers retry, and retry refetches")
     func retriesFailedCatalogue() async throws {
         let (sut, fetchGenres, _) = makeSUT(genres: .failure(.network(.offline)))
 
         sut.loadViewIfNeeded()
         // The stub records its call before the load task hops back to assign the
         // state, so waiting on the call can outrun the state it is a proxy for.
-        try await waitUntil { sut.currentUnavailableConfiguration?.button.title == "Повторить" }
+        try await waitUntil { sut.currentUnavailableConfiguration?.button.title == "Retry" }
 
         let configuration = try #require(sut.currentUnavailableConfiguration)
 
@@ -80,7 +80,7 @@ final class MoviesFilterViewControllerTests {
         try await waitUntil { await fetchGenres.calls.count == 2 }
     }
 
-    @Test("«Применить» отдаёт выбранное замыканием")
+    @Test("Apply reports the selection through the closure")
     func applyReportsSelection() async throws {
         let (sut, fetchGenres, applied) = makeSUT(selection: MoviesFilter(genreID: 28))
 
@@ -94,7 +94,7 @@ final class MoviesFilterViewControllerTests {
         #expect(reported == MoviesFilter(genreID: 28, sort: .ratingDescending))
     }
 
-    @Test("«Отмена» ничего не отдаёт")
+    @Test("Cancel reports nothing")
     func cancelReportsNothing() async throws {
         let (sut, _, applied) = makeSUT()
 

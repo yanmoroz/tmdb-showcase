@@ -3,7 +3,7 @@ import DomainKit
 
 @Suite("AppError")
 struct AppErrorTests {
-    @Test("Повтор имеет смысл только для временных сбоев", arguments: [
+    @Test("Retrying only makes sense for transient failures", arguments: [
         AppError.rateLimited,
         AppError.server(statusCode: 500),
         AppError.network(.offline),
@@ -13,7 +13,7 @@ struct AppErrorTests {
         #expect(error.isRetryable)
     }
 
-    @Test("Гео-блокировка, ключ и битый ответ повтором не лечатся", arguments: [
+    @Test("Region block, key and malformed response are not cured by retrying", arguments: [
         AppError.regionRestricted,
         AppError.unauthorized,
         AppError.notFound,
@@ -25,7 +25,7 @@ struct AppErrorTests {
         #expect(!error.isRetryable)
     }
 
-    @Test("Ошибки сервера с разным статусом различимы")
+    @Test("Server errors with different statuses stay distinguishable")
     func serverStatusIsPartOfIdentity() {
         #expect(AppError.server(statusCode: 500) != AppError.server(statusCode: 503))
         #expect(AppError.server(statusCode: 500) == AppError.server(statusCode: 500))

@@ -4,7 +4,7 @@ import DomainKitTestSupport
 
 @Suite("Page")
 struct PageTests {
-    @Test("Есть следующая страница, пока текущая не последняя")
+    @Test("There is a next page until the current one is last")
     func hasNextPageInMiddle() {
         let page = Page.fixture(items: Movie.fixtures(count: 20), page: 2, totalPages: 5)
 
@@ -12,7 +12,7 @@ struct PageTests {
         #expect(page.nextPage == 3)
     }
 
-    @Test("На последней странице следующей нет")
+    @Test("The last page has no next")
     func noNextPageOnLast() {
         let page = Page.fixture(items: Movie.fixtures(count: 3), page: 5, totalPages: 5)
 
@@ -20,7 +20,7 @@ struct PageTests {
         #expect(page.nextPage == nil)
     }
 
-    @Test("Единственная страница не имеет следующей")
+    @Test("A single page has no next")
     func singlePage() {
         let page = Page.fixture(items: Movie.fixtures(count: 3), page: 1, totalPages: 1)
 
@@ -28,7 +28,7 @@ struct PageTests {
         #expect(page.nextPage == nil)
     }
 
-    @Test("Пустая выдача пуста и не имеет продолжения")
+    @Test("An empty result is empty and has no continuation")
     func empty() {
         let page = Page<Movie>.empty()
 
@@ -38,7 +38,7 @@ struct PageTests {
         #expect(page.nextPage == nil)
     }
 
-    @Test("Пустая выдача запоминает номер запрошенной страницы")
+    @Test("An empty result remembers the requested page number")
     func emptyKeepsRequestedPage() {
         #expect(Page<Movie>.empty(page: 7).page == 7)
     }
