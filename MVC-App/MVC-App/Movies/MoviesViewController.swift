@@ -57,10 +57,16 @@ final class MoviesViewController: UIViewController {
 
     private lazy var collectionView = makeCollectionView()
     private let refreshControl = UIRefreshControl()
+    private let searchDebouncer: Debouncer
 
-    init(fetchMovies: any FetchMoviesUseCase, imageURLBuilder: TMDBImageURLBuilder) {
+    init(
+        fetchMovies: any FetchMoviesUseCase,
+        imageURLBuilder: TMDBImageURLBuilder,
+        searchDebounce: Duration = .milliseconds(300)
+    ) {
         self.fetchMovies = fetchMovies
         self.imageURLBuilder = imageURLBuilder
+        self.searchDebouncer = Debouncer(interval: searchDebounce)
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -80,19 +86,35 @@ final class MoviesViewController: UIViewController {
         title = "Фильмы"
         view.backgroundColor = .systemBackground
         setUpSubviews()
+        setUpSearch()
         reload()
     }
 
     // MARK: - Loading
 
-    private func reload() {
+    /// Reloading and changing the question are the same operation with a
+    /// different argument — a direct consequence of `query` living inside `Feed`.
+    private func setQuery(_ query: MoviesQuery) {
         if case .loading(let task) = activity {
             task.cancel()
         }
         activity = .idle
-        feed = Feed(query: feed.query)
+        feed = Feed(query: query)
         collectionView.reloadData()
+
+        // Without this the reader stays at the scroll position of the previous
+        // results. `.zero` is not the top: the search bar and safe area push it
+        // down by the adjusted inset.
+        collectionView.setContentOffset(
+            CGPoint(x: 0, y: -collectionView.adjustedContentInset.top),
+            animated: false
+        )
+
         loadNextPage()
+    }
+
+    private func reload() {
+        setQuery(feed.query)
     }
 
     private func loadNextPage() {
@@ -186,8 +208,18 @@ final class MoviesViewController: UIViewController {
         contentUnavailableConfiguration = switch activity {
         case .loading where feed.isEmpty: UIContentUnavailableConfiguration.loading()
         case .failed(let error): failureConfiguration(error)
-        case .idle where feed.isEmpty: emptyConfiguration()
+        case .idle where feed.isEmpty: emptyResultsConfiguration()
         default: nil
+        }
+    }
+
+    private func emptyResultsConfiguration() -> UIContentUnavailableConfiguration {
+        // The first-party search preset writes its own text, localised to the
+        // device — the reason a bespoke empty-state view was dropped earlier.
+        if case .search = feed.query {
+            UIContentUnavailableConfiguration.search()
+        } else {
+            emptyConfiguration()
         }
     }
 
@@ -216,6 +248,35 @@ final class MoviesViewController: UIViewController {
             }
         }
         return configuration
+    }
+
+    // MARK: - Search
+
+    private func setUpSearch() {
+        let searchController = UISearchController(searchResultsController: nil)
+        searchController.searchResultsUpdater = self
+        // Results are drawn in the same list, so dimming it on focus would hide
+        // the very thing the search is filtering.
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Поиск фильмов"
+        // Film titles are proper nouns in every language TMDB carries, so the
+        // keyboard must not second-guess them.
+        searchController.searchBar.autocapitalizationType = .none
+        searchController.searchBar.autocorrectionType = .no
+
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = true
+    }
+
+    private func applySearch(_ input: String) {
+        // The failable init of SearchText *is* the "blank input is no reason to
+        // hit the network" rule: nil means fall back to popular.
+        let query: MoviesQuery = SearchText(input).map { .search($0) } ?? .popular
+
+        // MoviesQuery is Hashable precisely so a query can be compared. Deleting
+        // typed text back to what is already on screen must not reload it.
+        guard query != feed.query else { return }
+        setQuery(query)
     }
 
     // MARK: - Layout
@@ -308,6 +369,17 @@ extension MoviesViewController: UICollectionViewDataSource {
         )
         (cell as? MovieCell)?.configure(with: model(for: feed[indexPath.item]))
         return cell
+    }
+}
+
+// MARK: - UISearchResultsUpdating
+
+extension MoviesViewController: UISearchResultsUpdating {
+    func updateSearchResults(for searchController: UISearchController) {
+        let input = searchController.searchBar.text ?? ""
+        searchDebouncer.schedule { [weak self] in
+            self?.applySearch(input)
+        }
     }
 }
 

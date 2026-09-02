@@ -37,6 +37,7 @@ MVC-App/
 │   │   ├── MoviesViewController.swift
 │   │   └── MovieCell.swift
 │   ├── Common/
+│   │   ├── Debouncer.swift
 │   │   ├── ToastView.swift
 │   │   └── AppError+Message.swift
 │   ├── Info.plist
@@ -64,10 +65,14 @@ This is deliberately orthogonal to the pattern. Modelling state so illegal combi
 
 Empty states — loading, no results, and failure with a retry button — are built on `contentUnavailableConfiguration` (iOS 17+) rather than a bespoke view. A hand-rolled one was written and then deleted: UIKit covers all three first-party, and `searchConfiguration` will come in useful for empty search results. The SwiftUI TCA version will use `ContentUnavailableView`, so none of this needs to move into a shared UI package.
 
+Search reuses two things from the domain rather than reimplementing them. `SearchText`'s failable initialiser *is* the "blank input is no reason to hit the network" rule — `nil` means fall back to popular, and no whitespace trimming is written here. And because `MoviesQuery` is `Hashable`, deleting typed text back to what is already on screen compares equal and reloads nothing.
+
+Debouncing lives in `Common/Debouncer.swift`, which cancels the previous piece of work inside `schedule`. Its interval is injected, so tests pass `.zero` and drain the main actor instead of waiting on wall-clock.
+
 The tests in `MVC-AppTests` measure what that costs. To check pagination you have to stand the whole view up, find the `UICollectionView` by walking the hierarchy, and poll for an in-flight `Task` that is never exposed. Under MVP the same checks become a call to a presenter method.
 
 Because a retain cycle is easy to introduce here — the controller holds a `Task` and targets a `UIRefreshControl` — every test tracks whether its controller is deallocated afterwards, using the suite's `deinit` as teardown.
 
 ## Status
 
-The list of popular movies is done: poster grid, pagination, loading / empty / failure states, a VPN toast on `.regionRestricted`, and pull-to-refresh. Next up is search with debounce and the genre filter, then the details screen.
+The list of popular movies is done: poster grid, pagination, loading / empty / failure states, a VPN toast on `.regionRestricted`, and pull-to-refresh. Search with debounce is done too — typing switches the query, clearing returns to popular, and empty results get the first-party search state. Next up is the genre filter, then the details screen.

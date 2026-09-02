@@ -129,6 +129,107 @@ final class MoviesViewControllerTests {
         #expect(sut.testCollectionView.numberOfItems(inSection: 0) == 6)
     }
 
+    // MARK: - Поиск
+
+    @Test("Введённый текст уходит в домен поисковым запросом")
+    func typedTextBecomesSearchQuery() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        sut.simulateSearch("dune")
+        try await waitUntil { await fetchMovies.calls.count == 2 }
+
+        let calls = await fetchMovies.calls
+        #expect(calls.map(\.query) == [.popular, .search(.fixture("dune"))])
+    }
+
+    @Test("Быстрый набор даёт один запрос с последним текстом")
+    func rapidTypingCollapsesToLastQuery() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        // Три нажатия подряд: промежуточные запросы уходить не должны.
+        for text in ["d", "du", "dune"] {
+            sut.simulateSearch(text)
+        }
+        await drainPendingWork()
+        try await waitUntil { await fetchMovies.calls.count == 2 }
+
+        let calls = await fetchMovies.calls
+        #expect(calls.map(\.query) == [.popular, .search(.fixture("dune"))])
+    }
+
+    @Test("Пустой ввод не идёт в сеть поиском", arguments: ["", "   ", "\n\t"])
+    func blankInputStaysOnPopular(input: String) async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        sut.simulateSearch(input)
+        await drainPendingWork()
+
+        // SearchText отвергает пустой ввод, а .popular уже показан — повторять
+        // тот же запрос незачем.
+        let calls = await fetchMovies.calls
+        #expect(calls.map(\.query) == [.popular])
+    }
+
+    @Test("Очистка поля возвращает популярное")
+    func clearingSearchReturnsToPopular() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        sut.simulateSearch("dune")
+        try await waitUntil { await fetchMovies.calls.count == 2 }
+
+        sut.simulateSearch("")
+        try await waitUntil { await fetchMovies.calls.count == 3 }
+
+        let calls = await fetchMovies.calls
+        #expect(calls.map(\.query) == [.popular, .search(.fixture("dune")), .popular])
+    }
+
+    @Test("Повторный ввод того же текста не перезапрашивает")
+    func repeatingSameTextDoesNotReload() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        sut.simulateSearch("dune")
+        try await waitUntil { await fetchMovies.calls.count == 2 }
+
+        // Обрезка пробелов даёт тот же SearchText, значит и тот же MoviesQuery.
+        sut.simulateSearch("  dune  ")
+        await drainPendingWork()
+
+        let calls = await fetchMovies.calls
+        #expect(calls.count == 2)
+    }
+
+    @Test("Пустая выдача поиска показывает первостороннее состояние")
+    func emptySearchShowsSearchConfiguration() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: [])))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        sut.simulateSearch("qqqqzzz")
+        try await waitUntil { await fetchMovies.calls.count == 2 }
+        let configuration = try #require(sut.currentUnavailableConfiguration)
+
+        // .search() пишет свой текст сам; наше «Фильмов нет» тут было бы враньём.
+        #expect(configuration.text != "Фильмов нет")
+        #expect(configuration.text != nil)
+    }
+
     // MARK: - Factory
 
     /// The view is deliberately not loaded here: `loadViewIfNeeded()` starts
@@ -143,7 +244,10 @@ final class MoviesViewControllerTests {
         let fetchMovies = FetchMoviesStub(result: result)
         let sut = MoviesViewController(
             fetchMovies: fetchMovies,
-            imageURLBuilder: TMDBImageURLBuilder(configuration: TMDBConfiguration(accessToken: "test"))
+            imageURLBuilder: TMDBImageURLBuilder(configuration: TMDBConfiguration(accessToken: "test")),
+            // Zero interval keeps the debounce observable without waiting on
+            // wall-clock: draining the main actor is enough to let it fire.
+            searchDebounce: .zero
         )
         trackedSUT = sut
         trackedLocation = sourceLocation
@@ -174,6 +278,14 @@ private extension MoviesViewController {
             view.layoutIfNeeded()
         }
         return contentUnavailableConfiguration as? UIContentUnavailableConfiguration
+    }
+
+    func simulateSearch(_ text: String) {
+        guard let searchController = navigationItem.searchController else {
+            preconditionFailure("MoviesViewController stopped installing a UISearchController")
+        }
+        searchController.searchBar.text = text
+        updateSearchResults(for: searchController)
     }
 
     func simulateCellDisplayed(at item: Int) {
