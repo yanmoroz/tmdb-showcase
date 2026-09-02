@@ -6,6 +6,8 @@
 //
 
 import UIKit
+import DomainKit
+import DataKit
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
@@ -18,16 +20,27 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = scene as? UIWindowScene else { return }
 
         let window = UIWindow(windowScene: windowScene)
-        window.rootViewController = UINavigationController(rootViewController: makeRoot())
+        window.rootViewController = isRunningTests
+            ? UIViewController()
+            : UINavigationController(rootViewController: makeRoot())
         window.makeKeyAndVisible()
         self.window = window
     }
 
-    // Заглушка до появления экрана Movies.
+    /// Unit tests build their own controllers, so the real stack is skipped:
+    /// assembling it here reads the TMDB token, and a missing token aborts the
+    /// host app before a single test can start.
+    private var isRunningTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
     private func makeRoot() -> UIViewController {
-        let viewController = UIViewController()
-        viewController.view.backgroundColor = .systemBackground
-        viewController.title = "Movies"
-        return viewController
+        let configuration = AppConfig.tmdb
+        let repository = TMDBMoviesRepository(configuration: configuration)
+
+        return MoviesViewController(
+            fetchMovies: FetchMovies(repository: repository),
+            imageURLBuilder: TMDBImageURLBuilder(configuration: configuration)
+        )
     }
 }
