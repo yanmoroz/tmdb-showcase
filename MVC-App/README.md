@@ -36,9 +36,12 @@ MVC-App/
 │   ├── AppConfig.swift              reads the TMDB token from Info.plist
 │   ├── Movies/
 │   │   ├── MoviesViewController.swift
+│   │   ├── MoviesFeed.swift
 │   │   ├── MoviesFilterViewController.swift
-│   │   ├── MovieDetailsViewController.swift
 │   │   └── MoviesFilter.swift
+│   ├── MovieDetails/                the screen both tabs push
+│   │   ├── MovieDetailsViewController.swift
+│   │   └── MovieDetailsModel.swift
 │   ├── Watchlist/
 │   │   └── WatchlistViewController.swift
 │   ├── Common/

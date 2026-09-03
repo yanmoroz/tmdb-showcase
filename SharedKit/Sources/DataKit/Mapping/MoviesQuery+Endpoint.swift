@@ -1,16 +1,6 @@
 import Foundation
 import DomainKit
 
-enum TMDBPagination {
-    /// TMDB answers 400 above this page, so requests and `totalPages` are both
-    /// clamped — otherwise `Page.hasNextPage` would promise an unfetchable page.
-    static let maxPage = 500
-
-    static func clamp(_ page: Int) -> Int {
-        min(max(page, 1), maxPage)
-    }
-}
-
 extension MoviesQuery {
     func endpoint(page: Int) -> TMDBEndpoint {
         let page = TMDBPagination.clamp(page)

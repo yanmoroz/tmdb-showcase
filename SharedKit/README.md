@@ -72,12 +72,13 @@ never reached, so every failure surfaces as `AppError.storage`.
 
 ```
 Sources/DomainKit/
-├── Entities/       Movie, MovieDetails, Genre, Page<Item>,
-│                   MoviesQuery (+ TrendingWindow, MovieSortOption), SearchText
+├── Entities/       Movie, MovieDetails, MovieTrailer, Genre, Page<Item>,
+│                   MoviesQuery (+ TrendingWindow), MovieSortOption, SearchText
 ├── Errors/         AppError (+ NetworkFailure)
 ├── Images/         MovieImageURLBuilder
-├── Repositories/   MoviesRepository, GenresRepository
-└── UseCases/       FetchMovies, FetchMovieDetails, FetchGenres
+├── Repositories/   MoviesRepository, GenresRepository, WatchlistRepository
+└── UseCases/       FetchMovies, FetchMovieDetails, FetchGenres, FetchWatchlist,
+                    FetchWatchlistIDs, AddToWatchlist, RemoveFromWatchlist
 ```
 
 A use case is a protocol with `callAsFunction` plus a struct implementation. Presentation depends on the protocol (`any FetchMoviesUseCase`), so presenter and view model tests substitute a use case stub rather than a fake repository.
@@ -87,18 +88,23 @@ A use case is a protocol with `callAsFunction` plus a struct implementation. Pre
 ```
 Sources/DataKit/
 ├── Configuration/  TMDBConfiguration
-├── Networking/     TMDBAPIClient, TMDBEndpoint, TMDBStatusResponse, JSONDecoder+TMDB
-├── DTOs/           PagedResponseDTO<Item>, MovieDTO, MovieDetailsDTO, GenreDTO
+├── Networking/     TMDBAPIClient, TMDBEndpoint, TMDBPagination,
+│                   TMDBStatusResponse, JSONDecoder+TMDB
+├── DTOs/           PagedResponseDTO<Item>, MovieDTO, MovieDetailsDTO, GenreDTO,
+│                   VideoDTO
 ├── Mapping/        AppError+Classification, MoviesQuery+Endpoint, TMDBDate,
 │                   Optional+NonEmpty
-├── Persistence/    MovieCache, MovieCacheStore, GenreCacheStore, MoviesQueryKey,
-│                   MovieCacheSchema, MovieCacheContainer, CachePolicy
+├── Persistence/    CachePolicy
+│   ├── MovieCache/ MovieCache, MovieCacheContainer, MovieCacheSchema,
+│   │               MovieCacheStore, GenreCacheStore, MoviesQueryKey
+│   └── Watchlist/  SwiftDataWatchlistRepository, UnavailableWatchlist,
+│                   WatchlistContainer, WatchlistSchema
 ├── Repositories/   TMDBMoviesRepository, TMDBGenresRepository,
 │                   CachingMoviesRepository, CachingGenresRepository
 └── Images/         TMDBImageURLBuilder
 ```
 
-Only `TMDBConfiguration`, the four repository implementations, `MovieCache` and `TMDBImageURLBuilder` are public, and presentation names none of them: it takes `any MoviesRepository`, `any MovieImageURLBuilder` and the rest, so `import DataKit` appears in the composition root of an `-App` and nowhere else. The `@Model` types, the stores and `MoviesQueryKey` are `internal` — the cache's shape on disk is nobody else's business. DTOs, the client and the endpoints are `internal`: the six apps have no business knowing TMDB's wire format, which is the whole point of the boundary.
+Only `TMDBConfiguration`, the six repository implementations, `MovieCache` and `TMDBImageURLBuilder` are public, and presentation names none of them: it takes `any MoviesRepository`, `any MovieImageURLBuilder` and the rest, so `import DataKit` appears in the composition root of an `-App` and nowhere else. The `@Model` types, the stores and `MoviesQueryKey` are `internal` — the cache's shape on disk is nobody else's business. DTOs, the client and the endpoints are `internal`: the six apps have no business knowing TMDB's wire format, which is the whole point of the boundary.
 
 The package's single `do/catch` lives in `TMDBAPIClient`, and `AppError` is born only there, through `init(httpStatusCode:body:)` and `init(transportError:)`. A 403 is told apart by its body: empty means the CDN geo-block, one carrying `status_code` means TMDB rejected the token. Otherwise someone with a broken token would be advised to switch on a VPN.
 
