@@ -1,4 +1,5 @@
 import Foundation
+import DomainKit
 
 /// Turns the relative paths the domain stores (`/abc123.jpg`) into CDN URLs.
 ///
@@ -19,11 +20,11 @@ public struct TMDBImageURLBuilder: Sendable {
         self.imageBaseURL = configuration.imageBaseURL
     }
 
-    public func posterURL(path: String?, size: PosterSize = .w342) -> URL? {
+    public func posterURL(path: String?, size: PosterSize) -> URL? {
         url(path: path, size: size.rawValue)
     }
 
-    public func backdropURL(path: String?, size: BackdropSize = .w780) -> URL? {
+    public func backdropURL(path: String?, size: BackdropSize) -> URL? {
         url(path: path, size: size.rawValue)
     }
 
@@ -32,5 +33,19 @@ public struct TMDBImageURLBuilder: Sendable {
         return imageBaseURL
             .appending(path: size)
             .appending(path: path)
+    }
+}
+
+/// The sizes presentation gets when it does not name one — and it never does,
+/// since the domain protocol has no size parameter. One size per kind means a
+/// poster the grid downloaded is the same file the details screen asks for,
+/// so the image cache above answers instead of the CDN.
+extension TMDBImageURLBuilder: MovieImageURLBuilder {
+    public func posterURL(path: String?) -> URL? {
+        posterURL(path: path, size: .w342)
+    }
+
+    public func backdropURL(path: String?) -> URL? {
+        backdropURL(path: path, size: .w780)
     }
 }

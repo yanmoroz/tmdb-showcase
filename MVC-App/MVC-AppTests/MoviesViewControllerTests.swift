@@ -2,7 +2,6 @@ import Testing
 import UIKit
 import DomainKit
 import DomainKitTestSupport
-import DataKit
 @testable import MVC_App
 
 @MainActor
@@ -340,6 +339,42 @@ final class MoviesViewControllerTests {
         #expect(sut.navigationItem.rightBarButtonItem?.isEnabled == false)
     }
 
+    // MARK: - Details
+
+    @Test("Selecting a movie pushes its details")
+    func pushesDetailsOnSelection() async throws {
+        let page = Page.fixture(items: Movie.fixtures(count: 3))
+        let (sut, _) = makeSUT(result: .success(page))
+        let navigation = UINavigationController(rootViewController: sut)
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { sut.testCollectionView.numberOfItems(inSection: 0) == 3 }
+
+        sut.simulateSelection(at: 1)
+
+        #expect(navigation.viewControllers.count == 2)
+        #expect(navigation.topViewController is MovieDetailsViewController)
+        await drainPendingWork()
+    }
+
+    /// The push form of the guard on `presentFilter`: two quick taps must not
+    /// stack two copies of the same screen.
+    @Test("A second selection does not stack another details screen")
+    func doesNotStackDetails() async throws {
+        let page = Page.fixture(items: Movie.fixtures(count: 3))
+        let (sut, _) = makeSUT(result: .success(page))
+        let navigation = UINavigationController(rootViewController: sut)
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { sut.testCollectionView.numberOfItems(inSection: 0) == 3 }
+
+        sut.simulateSelection(at: 0)
+        sut.simulateSelection(at: 2)
+
+        #expect(navigation.viewControllers.count == 2)
+        await drainPendingWork()
+    }
+
     // MARK: - Offline signals
 
     /// With the cache wired, a warm page 1 answers offline silently, so this
@@ -394,7 +429,8 @@ final class MoviesViewControllerTests {
         let sut = MoviesViewController(
             fetchMovies: fetchMovies,
             fetchGenres: FetchGenresStub(),
-            imageURLBuilder: TMDBImageURLBuilder(configuration: TMDBConfiguration(accessToken: "test")),
+            fetchMovieDetails: FetchMovieDetailsStub(),
+            imageURLBuilder: MovieImageURLBuilderStub(),
             // Zero interval keeps the debounce observable without waiting on
             // wall-clock: draining the main actor is enough to let it fire.
             searchDebounce: .zero
@@ -436,6 +472,12 @@ private extension MoviesViewController {
         }
         searchController.searchBar.text = text
         updateSearchResults(for: searchController)
+    }
+
+    func simulateSelection(at item: Int) {
+        autoreleasepool {
+            collectionView(testCollectionView, didSelectItemAt: IndexPath(item: item, section: 0))
+        }
     }
 
     func simulateCellDisplayed(at item: Int) {

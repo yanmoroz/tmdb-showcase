@@ -1,11 +1,13 @@
 import UIKit
 import DomainKit
-import DataKit
 
 final class MoviesViewController: UIViewController {
     private let fetchMovies: any FetchMoviesUseCase
     private let fetchGenres: any FetchGenresUseCase
-    private let imageURLBuilder: TMDBImageURLBuilder
+    /// Held only to hand on: the list never calls it. A router would own this
+    /// instead, which is one of the seams the other five architectures change.
+    private let fetchMovieDetails: any FetchMovieDetailsUseCase
+    private let imageURLBuilder: any MovieImageURLBuilder
 
     /// The accumulated answer to one query.
     ///
@@ -73,11 +75,13 @@ final class MoviesViewController: UIViewController {
     init(
         fetchMovies: any FetchMoviesUseCase,
         fetchGenres: any FetchGenresUseCase,
-        imageURLBuilder: TMDBImageURLBuilder,
+        fetchMovieDetails: any FetchMovieDetailsUseCase,
+        imageURLBuilder: any MovieImageURLBuilder,
         searchDebounce: Duration = .milliseconds(300)
     ) {
         self.fetchMovies = fetchMovies
         self.fetchGenres = fetchGenres
+        self.fetchMovieDetails = fetchMovieDetails
         self.imageURLBuilder = imageURLBuilder
         self.searchDebouncer = Debouncer(interval: searchDebounce)
         super.init(nibName: nil, bundle: nil)
@@ -327,6 +331,24 @@ final class MoviesViewController: UIViewController {
         self.filter = filter
     }
 
+    // MARK: - Details
+
+    /// Pushed by this controller, as the filter is presented by it. The guard is
+    /// the push form of `presentFilter`'s: two quick taps would otherwise stack
+    /// two copies of the same screen.
+    func showDetails(for movie: Movie) {
+        guard navigationController?.topViewController === self else { return }
+
+        navigationController?.pushViewController(
+            MovieDetailsViewController(
+                movie: movie,
+                fetchDetails: fetchMovieDetails,
+                imageURLBuilder: imageURLBuilder
+            ),
+            animated: true
+        )
+    }
+
     // MARK: - Layout
 
     private func setUpSubviews() {
@@ -387,17 +409,10 @@ final class MoviesViewController: UIViewController {
         MovieCell.Model(
             posterURL: imageURLBuilder.posterURL(path: movie.posterPath),
             title: movie.title,
-            year: movie.releaseDate.map { Self.yearFormatter.string(from: $0) },
-            rating: movie.voteCount > 0 ? String(format: "★ %.1f", movie.voteAverage) : nil
+            year: MovieFormatting.year(movie.releaseDate),
+            rating: MovieFormatting.rating(average: movie.voteAverage, count: movie.voteCount)
         )
     }
-
-    private static let yearFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyy"
-        return formatter
-    }()
 }
 
 // MARK: - UICollectionViewDataSource
@@ -446,5 +461,10 @@ extension MoviesViewController: UICollectionViewDelegate {
         forItemAt indexPath: IndexPath
     ) {
         loadNextPageIfNearEnd(indexPath.item)
+    }
+
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        collectionView.deselectItem(at: indexPath, animated: true)
+        showDetails(for: feed[indexPath.item])
     }
 }

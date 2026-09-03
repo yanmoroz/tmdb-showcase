@@ -39,6 +39,16 @@ final class Box<Value> {
 /// Controllers build their hierarchy in code and expose none of it, so tests
 /// reach a view by walking down from the root.
 extension UIView {
+    /// `firstSubview(of:)` returns whichever match comes first, which cannot tell
+    /// one label from another on a screen made mostly of labels.
+    func firstSubview<T: UIView>(of type: T.Type, identifier: String) -> T? {
+        if let match = self as? T, accessibilityIdentifier == identifier { return match }
+        for subview in subviews {
+            if let found = subview.firstSubview(of: type, identifier: identifier) { return found }
+        }
+        return nil
+    }
+
     func firstSubview<T: UIView>(of type: T.Type) -> T? {
         if let match = self as? T { return match }
         for subview in subviews {

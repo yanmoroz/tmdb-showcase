@@ -124,6 +124,18 @@ struct ImageURLBuilderTests {
         )
     }
 
+    @Test("Without a size, the domain protocol yields the shared default")
+    func buildsDefaultSizeURLs() {
+        #expect(
+            builder.posterURL(path: "/poster1.jpg")
+                == URL(string: "https://image.tmdb.org/t/p/w342/poster1.jpg")
+        )
+        #expect(
+            builder.backdropURL(path: "/backdrop1.jpg")
+                == URL(string: "https://image.tmdb.org/t/p/w780/backdrop1.jpg")
+        )
+    }
+
     @Test("A missing path yields no URL", arguments: [nil, ""])
     func returnsNilWithoutPath(path: String?) {
         #expect(builder.posterURL(path: path) == nil)

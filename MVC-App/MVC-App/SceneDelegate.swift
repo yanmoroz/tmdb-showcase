@@ -50,6 +50,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         return MoviesViewController(
             fetchMovies: FetchMovies(repository: movies),
             fetchGenres: FetchGenres(repository: genres),
+            fetchMovieDetails: FetchMovieDetails(repository: movies),
             imageURLBuilder: TMDBImageURLBuilder(configuration: configuration)
         )
     }

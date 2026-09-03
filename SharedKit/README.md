@@ -14,7 +14,7 @@ Swift 6 language mode, iOS 17+. `DomainKit` imports nothing but `Foundation`.
 
 The rules all six presentation implementations rest on.
 
-**The domain knows nothing about TMDB.** Image paths are stored as relative strings (`posterPath`) and DataKit assembles the full URL. The `sort_by` strings, the trending window path and TMDB's `page > 500` limit are DataKit's too. Domain enums carry no `RawValue`.
+**The domain knows nothing about TMDB.** Image paths are stored as relative strings (`posterPath`) and DataKit assembles the full URL behind `MovieImageURLBuilder` — the size vocabulary (`w342`, `w780`) is TMDB's wire detail and stops at that protocol, so no screen picks a CDN size. The `sort_by` strings, the trending window path and TMDB's `page > 500` limit are DataKit's too. Domain enums carry no `RawValue`.
 
 **The domain is stateless.** Pagination is a pure `(query, page) -> Page<Movie>`. The accumulated list, the current page and the loading flag live in the presenter, view model, interactor or reducer. This is a deliberate refusal of a stateful paginator: in TCA it would create a second source of state outside the store.
 
@@ -68,6 +68,7 @@ Sources/DomainKit/
 ├── Entities/       Movie, MovieDetails, Genre, Page<Item>,
 │                   MoviesQuery (+ TrendingWindow, MovieSortOption), SearchText
 ├── Errors/         AppError (+ NetworkFailure)
+├── Images/         MovieImageURLBuilder
 ├── Repositories/   MoviesRepository, GenresRepository
 └── UseCases/       FetchMovies, FetchMovieDetails, FetchGenres
 ```
@@ -90,7 +91,7 @@ Sources/DataKit/
 └── Images/         TMDBImageURLBuilder
 ```
 
-Only `TMDBConfiguration`, the four repository implementations, `MovieCache` and `TMDBImageURLBuilder` are public. The `@Model` types, the stores and `MoviesQueryKey` are `internal` — the cache's shape on disk is nobody else's business. DTOs, the client and the endpoints are `internal`: the six apps have no business knowing TMDB's wire format, which is the whole point of the boundary.
+Only `TMDBConfiguration`, the four repository implementations, `MovieCache` and `TMDBImageURLBuilder` are public, and presentation names none of them: it takes `any MoviesRepository`, `any MovieImageURLBuilder` and the rest, so `import DataKit` appears in the composition root of an `-App` and nowhere else. The `@Model` types, the stores and `MoviesQueryKey` are `internal` — the cache's shape on disk is nobody else's business. DTOs, the client and the endpoints are `internal`: the six apps have no business knowing TMDB's wire format, which is the whole point of the boundary.
 
 The package's single `do/catch` lives in `TMDBAPIClient`, and `AppError` is born only there, through `init(httpStatusCode:body:)` and `init(transportError:)`. A 403 is told apart by its body: empty means the CDN geo-block, one carrying `status_code` means TMDB rejected the token. Otherwise someone with a broken token would be advised to switch on a VPN.
 

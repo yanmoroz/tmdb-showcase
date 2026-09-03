@@ -36,10 +36,12 @@ MVC-App/
 │   ├── Movies/
 │   │   ├── MoviesViewController.swift
 │   │   ├── MoviesFilterViewController.swift
+│   │   ├── MovieDetailsViewController.swift
 │   │   ├── MoviesFilter.swift
 │   │   └── MovieCell.swift
 │   ├── Common/
 │   │   ├── Debouncer.swift
+│   │   ├── MovieFormatting.swift
 │   │   ├── ToastView.swift
 │   │   ├── MovieSortOption+Title.swift
 │   │   └── AppError+Message.swift
@@ -86,7 +88,17 @@ Because a retain cycle is easy to introduce here — the controller holds a `Tas
 
 ## Status
 
-The list of popular movies is done: poster grid, pagination, loading / empty / failure states, a toast for errors that must not replace loaded content, and pull-to-refresh. Search with debounce is done too — typing switches the query, clearing returns to whatever the filter says, and empty results get the first-party search state. The genre filter and sorting are in, behind a modal screen that owns the genre catalogue. Next up is the details screen.
+The list of popular movies is done: poster grid, pagination, loading / empty / failure states, a toast for errors that must not replace loaded content, and pull-to-refresh. Search with debounce is done too — typing switches the query, clearing returns to whatever the filter says, and empty results get the first-party search state. The genre filter and sorting are in, behind a modal screen that owns the genre catalogue. The details screen is pushed by `MoviesViewController`, which holds
+`FetchMovieDetails` only to hand on — a router would own that, and it is one of the
+seams the other five architectures change. It is seeded with the `Movie` the list
+already has, so title, artwork, year, rating and overview are on screen before
+`/movie/{id}` is asked; only tagline, genres, runtime and the homepage wait for it.
+That also means a film never opened before still shows a usable card offline, with
+the failure inline rather than over it.
+
+Its `Model` is a pure projection of the seed plus whatever loaded, which is what the
+tests assert against — the labels get one test of their own to prove the projection
+reaches them. Next up are the remaining five architectures.
 
 The SwiftData cache is wired in `SceneDelegate`, the only place that knows about it:
 both controllers take use cases and cannot tell a cached answer from a live one.
