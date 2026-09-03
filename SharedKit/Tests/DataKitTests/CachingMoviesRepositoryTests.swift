@@ -77,6 +77,7 @@ struct CachingMoviesRepositoryTests {
         .notFound,
         .decoding,
         .server(statusCode: 503),
+        .storage,
         .unknown,
     ])
     func neverMasksOtherFailures(error: AppError) async throws {

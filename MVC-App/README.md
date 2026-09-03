@@ -95,9 +95,17 @@ Because a retain cycle is easy to introduce here — the controller holds a `Tas
 
 The list of popular movies is done: poster grid, pagination, loading / empty / failure states, a toast for errors that must not replace loaded content, and pull-to-refresh. Search with debounce is done too — typing switches the query, clearing returns to whatever the filter says, and empty results get the first-party search state. The genre filter and sorting are in, behind a modal screen that owns the genre catalogue. The details screen is pushed by `MoviesViewController`, which holds
 `FetchMovieDetails` only to hand on — a router would own that, and it is one of the
-seams the other five architectures change. It is seeded with the `Movie` the list
+seams the other five architectures change. With the watchlist added that constructor
+takes eight parameters: two (`FetchGenres`, `FetchMovieDetails`) it never calls at all,
+and three more it both uses and passes down. It is seeded with the `Movie` the list
 already has, so title, artwork, year, rating and overview are on screen before
 `/movie/{id}` is asked; only tagline, genres, runtime and the trailer wait for it.
+
+Bookmarking works from a grid cell and from the details screen, and is optimistic: the
+mark flips immediately, and a failed write puts it back and toasts, because a save that
+vanished silently would leave the reader believing a film is on their list. Nothing
+observes the store, so the grid re-reads what is saved in `viewWillAppear` — the details
+screen it pushed has no channel back.
 That also means a film never opened before still shows a usable card offline, with
 the failure inline rather than over it.
 

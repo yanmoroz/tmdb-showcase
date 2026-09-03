@@ -43,7 +43,18 @@ final class MovieDetailsViewController: UIViewController {
 
     private let movie: Movie
     private let fetchDetails: any FetchMovieDetailsUseCase
+    private let fetchWatchlistIDs: any FetchWatchlistIDsUseCase
+    private let addToWatchlist: any AddToWatchlistUseCase
+    private let removeFromWatchlist: any RemoveFromWatchlistUseCase
     private let imageURLBuilder: any MovieImageURLBuilder
+
+    private var isSaved = false {
+        didSet { updateBookmarkItem() }
+    }
+
+    private lazy var bookmarkItem = UIBarButtonItem(
+        primaryAction: UIAction { [weak self] _ in self?.toggleWatchlist() }
+    )
 
     private var details: Details = .idle {
         didSet { render() }
@@ -69,10 +80,16 @@ final class MovieDetailsViewController: UIViewController {
     init(
         movie: Movie,
         fetchDetails: any FetchMovieDetailsUseCase,
+        fetchWatchlistIDs: any FetchWatchlistIDsUseCase,
+        addToWatchlist: any AddToWatchlistUseCase,
+        removeFromWatchlist: any RemoveFromWatchlistUseCase,
         imageURLBuilder: any MovieImageURLBuilder
     ) {
         self.movie = movie
         self.fetchDetails = fetchDetails
+        self.fetchWatchlistIDs = fetchWatchlistIDs
+        self.addToWatchlist = addToWatchlist
+        self.removeFromWatchlist = removeFromWatchlist
         self.imageURLBuilder = imageURLBuilder
         super.init(nibName: nil, bundle: nil)
     }
@@ -93,9 +110,51 @@ final class MovieDetailsViewController: UIViewController {
         title = movie.title
         navigationItem.largeTitleDisplayMode = .never
         view.backgroundColor = .systemBackground
+        navigationItem.rightBarButtonItem = bookmarkItem
+        updateBookmarkItem()
         setUpSubviews()
         render()
         load()
+        loadWatchlistState()
+    }
+
+    // MARK: - Watchlist
+
+    private func loadWatchlistState() {
+        Task { [weak self] in
+            guard let self, let saved = try? await fetchWatchlistIDs() else { return }
+            isSaved = saved.contains(movie.id)
+        }
+    }
+
+    /// The seeded `Movie` is what gets saved, so this works before
+    /// `/movie/{id}` answers — and offline, where it may never answer.
+    private func toggleWatchlist() {
+        let wasSaved = isSaved
+        isSaved = !wasSaved
+
+        Task { [weak self] in
+            guard let self else { return }
+
+            do {
+                if wasSaved {
+                    try await removeFromWatchlist(id: movie.id)
+                } else {
+                    try await addToWatchlist(movie)
+                }
+            } catch let error as AppError {
+                isSaved = wasSaved
+                ToastView.show(error.message, in: view)
+            } catch {
+                isSaved = wasSaved
+                ToastView.show(AppError.unknown.message, in: view)
+            }
+        }
+    }
+
+    private func updateBookmarkItem() {
+        bookmarkItem.image = UIImage(systemName: isSaved ? "bookmark.fill" : "bookmark")
+        bookmarkItem.accessibilityLabel = isSaved ? "Remove from watchlist" : "Add to watchlist"
     }
 
     // MARK: - Loading

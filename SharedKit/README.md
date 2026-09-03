@@ -59,7 +59,14 @@ then interpret — the same objection that ruled out stale-while-revalidate — 
 report something the reader cannot act on. The visible cost is that offline
 pull-to-refresh looks like it succeeded.
 
-**The "in watchlist" flag will not become a field on `Movie`.** Watchlist state is overlaid onto `[Movie]` in presentation through a `Set<Movie.ID>` from the future `WatchlistRepository`.
+**The "in watchlist" flag will not become a field on `Movie`.** Watchlist state is overlaid onto `[Movie]` in presentation through a `Set<Movie.ID>` from `WatchlistRepository`.
+
+**The watchlist is the one store that must not lose a write.** It keeps whole `Movie`
+snapshots in its own container under Application Support — backed up, never purged, and
+versioned from the first commit — where the cache sits in `Caches/` and may be deleted by
+the OS or by a schema change. Its errors invert the cache's too: a cache that cannot answer
+is a miss, but a save that quietly failed leaves the reader believing a film is on a list it
+never reached, so every failure surfaces as `AppError.storage`.
 
 ## What lives where
 

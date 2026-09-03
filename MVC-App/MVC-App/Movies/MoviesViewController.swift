@@ -7,6 +7,11 @@ final class MoviesViewController: UIViewController {
     /// Held only to hand on: the list never calls it. A router would own this
     /// instead, which is one of the seams the other five architectures change.
     private let fetchMovieDetails: any FetchMovieDetailsUseCase
+    /// Three more the list only partly uses, and hands the rest to the screen it
+    /// pushes. A router would own them; MVC pays for one in every constructor.
+    private let fetchWatchlistIDs: any FetchWatchlistIDsUseCase
+    private let addToWatchlist: any AddToWatchlistUseCase
+    private let removeFromWatchlist: any RemoveFromWatchlistUseCase
     private let imageURLBuilder: any MovieImageURLBuilder
 
     /// The accumulated answer to one query.
@@ -29,6 +34,10 @@ final class MoviesViewController: UIViewController {
         var nextPage: Int? { loadedPage < totalPages ? loadedPage + 1 : nil }
 
         subscript(item: Int) -> Movie { movies[item] }
+
+        func index(of id: Movie.ID) -> Int? {
+            movies.firstIndex { $0.id == id }
+        }
 
         mutating func append(_ page: Page<Movie>) {
             movies.append(contentsOf: page.items)
@@ -63,6 +72,10 @@ final class MoviesViewController: UIViewController {
     private var searchText: SearchText? { didSet { applyInputs() } }
     private var filter = MoviesFilter() { didSet { applyInputs() } }
 
+    /// Overlaid onto whatever the feed returned — the flag is deliberately not
+    /// a field on `Movie`.
+    private var savedIDs: Set<Movie.ID> = []
+
     private var currentQuery: MoviesQuery {
         if let searchText { .search(searchText) } else { filter.query }
     }
@@ -77,12 +90,18 @@ final class MoviesViewController: UIViewController {
         fetchMovies: any FetchMoviesUseCase,
         fetchGenres: any FetchGenresUseCase,
         fetchMovieDetails: any FetchMovieDetailsUseCase,
+        fetchWatchlistIDs: any FetchWatchlistIDsUseCase,
+        addToWatchlist: any AddToWatchlistUseCase,
+        removeFromWatchlist: any RemoveFromWatchlistUseCase,
         imageURLBuilder: any MovieImageURLBuilder,
         searchDebounce: Duration = .milliseconds(300)
     ) {
         self.fetchMovies = fetchMovies
         self.fetchGenres = fetchGenres
         self.fetchMovieDetails = fetchMovieDetails
+        self.fetchWatchlistIDs = fetchWatchlistIDs
+        self.addToWatchlist = addToWatchlist
+        self.removeFromWatchlist = removeFromWatchlist
         self.imageURLBuilder = imageURLBuilder
         self.searchDebouncer = Debouncer(interval: searchDebounce)
         super.init(nibName: nil, bundle: nil)
@@ -108,6 +127,68 @@ final class MoviesViewController: UIViewController {
         navigationItem.titleView = sourceControl
         navigationItem.rightBarButtonItem = filterItem
         reload()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // The details screen this list pushed can change what is saved, and
+        // there is no channel back — so the list re-reads on the way in.
+        reloadWatchlist()
+    }
+
+    // MARK: - Watchlist
+
+    private func reloadWatchlist() {
+        Task { [weak self] in
+            guard let self, let saved = try? await fetchWatchlistIDs(), saved != savedIDs else { return }
+
+            // A read that failed leaves the previous marks alone: showing every
+            // film as unsaved would be a worse answer than a slightly old one.
+            savedIDs = saved
+            collectionView.reloadData()
+        }
+    }
+
+    /// Optimistic, because the store is local and the answer is nearly instant —
+    /// but a failure has to put the mark back, or the reader is left believing a
+    /// film is on a list it never reached.
+    func toggleWatchlist(for movie: Movie) {
+        let wasSaved = savedIDs.contains(movie.id)
+        setSaved(!wasSaved, for: movie.id)
+
+        Task { [weak self] in
+            guard let self else { return }
+
+            do {
+                if wasSaved {
+                    try await removeFromWatchlist(id: movie.id)
+                } else {
+                    try await addToWatchlist(movie)
+                }
+            } catch let error as AppError {
+                setSaved(wasSaved, for: movie.id)
+                ToastView.show(error.message, in: view)
+            } catch {
+                setSaved(wasSaved, for: movie.id)
+                ToastView.show(AppError.unknown.message, in: view)
+            }
+        }
+    }
+
+    private func setSaved(_ isSaved: Bool, for id: Movie.ID) {
+        if isSaved {
+            savedIDs.insert(id)
+        } else {
+            savedIDs.remove(id)
+        }
+
+        // One cell, in place. A batch update here would meet the same
+        // recount problem `append` documents.
+        guard
+            let item = feed.index(of: id),
+            let cell = collectionView.cellForItem(at: IndexPath(item: item, section: 0)) as? MovieCell
+        else { return }
+        cell.configure(with: model(for: feed[item]))
     }
 
     // MARK: - Loading
@@ -375,6 +456,9 @@ final class MoviesViewController: UIViewController {
             MovieDetailsViewController(
                 movie: movie,
                 fetchDetails: fetchMovieDetails,
+                fetchWatchlistIDs: fetchWatchlistIDs,
+                addToWatchlist: addToWatchlist,
+                removeFromWatchlist: removeFromWatchlist,
                 imageURLBuilder: imageURLBuilder
             ),
             animated: true
@@ -442,7 +526,8 @@ final class MoviesViewController: UIViewController {
             posterURL: imageURLBuilder.posterURL(path: movie.posterPath),
             title: movie.title,
             year: MovieFormatting.year(movie.releaseDate),
-            rating: MovieFormatting.rating(average: movie.voteAverage, count: movie.voteCount)
+            rating: MovieFormatting.rating(average: movie.voteAverage, count: movie.voteCount),
+            isSaved: savedIDs.contains(movie.id)
         )
     }
 }
@@ -462,7 +547,11 @@ extension MoviesViewController: UICollectionViewDataSource {
             withReuseIdentifier: MovieCell.reuseIdentifier,
             for: indexPath
         )
-        (cell as? MovieCell)?.configure(with: model(for: feed[indexPath.item]))
+        let movie = feed[indexPath.item]
+        if let cell = cell as? MovieCell {
+            cell.configure(with: model(for: movie))
+            cell.onToggleWatchlist = { [weak self] in self?.toggleWatchlist(for: movie) }
+        }
         return cell
     }
 }

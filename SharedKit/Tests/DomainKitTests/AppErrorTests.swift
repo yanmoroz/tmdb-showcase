@@ -8,6 +8,8 @@ struct AppErrorTests {
         AppError.server(statusCode: 500),
         AppError.network(.offline),
         AppError.network(.timedOut),
+        // A full disk may clear, and a write is cheap to repeat.
+        AppError.storage,
     ])
     func retryable(error: AppError) {
         #expect(error.isRetryable)

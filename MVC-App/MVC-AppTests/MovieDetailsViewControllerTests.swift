@@ -97,6 +97,10 @@ final class MovieDetailsViewControllerTests {
     private weak var trackedSUT: MovieDetailsViewController?
     private var trackedLocation: SourceLocation?
 
+    private let watchlistIDs = FetchWatchlistIDsStub()
+    private let addToWatchlist = AddToWatchlistStub()
+    private let removeFromWatchlist = RemoveFromWatchlistStub()
+
     deinit {
         if let trackedLocation {
             #expect(
@@ -161,6 +165,50 @@ final class MovieDetailsViewControllerTests {
         #expect(sut.currentUnavailableConfiguration == nil)
     }
 
+    // MARK: - Watchlist
+
+    @Test("The bookmark shows what the store already holds")
+    func reflectsSavedState() async throws {
+        await watchlistIDs.setResult(.success([42]))
+        let (sut, _) = makeSUT(movie: .fixture(id: 42))
+
+        sut.loadViewIfNeeded()
+
+        try await waitUntil {
+            sut.navigationItem.rightBarButtonItem?.accessibilityLabel == "Remove from watchlist"
+        }
+    }
+
+    @Test("The bookmark saves the seeded movie")
+    func savesTheSeededMovie() async throws {
+        let (sut, _) = makeSUT(movie: .fixture(id: 42))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await self.watchlistIDs.callCount >= 1 }
+
+        sut.simulateBookmarkTap()
+
+        try await waitUntil { await self.addToWatchlist.calls.map(\.id) == [42] }
+        await drainPendingWork()
+    }
+
+    @Test("A failed save puts the bookmark back")
+    func revertsAFailedSave() async throws {
+        await addToWatchlist.setResult(.failure(.storage))
+        let (sut, _) = makeSUT(movie: .fixture(id: 42))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await self.watchlistIDs.callCount >= 1 }
+
+        sut.simulateBookmarkTap()
+
+        try await waitUntil {
+            sut.navigationItem.rightBarButtonItem?.accessibilityLabel == "Add to watchlist"
+        }
+        #expect(sut.view.firstSubview(of: ToastView.self) != nil)
+        await drainPendingWork()
+    }
+
     // MARK: - Factory
 
     private func makeSUT(
@@ -172,6 +220,9 @@ final class MovieDetailsViewControllerTests {
         let sut = MovieDetailsViewController(
             movie: movie,
             fetchDetails: fetchDetails,
+            fetchWatchlistIDs: watchlistIDs,
+            addToWatchlist: addToWatchlist,
+            removeFromWatchlist: removeFromWatchlist,
             imageURLBuilder: MovieImageURLBuilderStub()
         )
         trackedSUT = sut
@@ -197,6 +248,12 @@ private extension MovieDetailsViewController {
     func text(for identifier: String) -> String? {
         autoreleasepool {
             view.firstSubview(of: UILabel.self, identifier: identifier)?.text
+        }
+    }
+
+    func simulateBookmarkTap() {
+        autoreleasepool {
+            navigationItem.rightBarButtonItem?.primaryAction?.performWithSender(nil, target: nil)
         }
     }
 

@@ -34,11 +34,16 @@ public enum AppError: Error, Hashable, Sendable {
     /// catches cancellation and returns it here.
     case cancelled
 
+    /// A local store could not be read or written. The only case here that
+    /// never involved a network round trip.
+    case storage
+
     case unknown
 
     public var isRetryable: Bool {
         switch self {
-        case .rateLimited, .server, .network:
+        // A full disk may clear, and a write is cheap to repeat.
+        case .rateLimited, .server, .network, .storage:
             true
         case .regionRestricted, .unauthorized, .notFound, .decoding, .cancelled,
             .unknown:

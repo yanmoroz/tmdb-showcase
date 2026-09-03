@@ -40,6 +40,14 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         var movies: any MoviesRepository = TMDBMoviesRepository(configuration: configuration)
         var genres: any GenresRepository = TMDBGenresRepository(configuration: configuration)
 
+        // Unlike the cache, a watchlist that will not open is not something to
+        // run silently without: the stand-in reports the failure when the reader
+        // actually tries to save.
+        var watchlist: any WatchlistRepository = UnavailableWatchlist()
+        if let stored = SwiftDataWatchlistRepository() {
+            watchlist = stored
+        }
+
         // A store that will not open leaves the app running uncached rather than
         // not running at all.
         if let cache = MovieCache() {
@@ -51,6 +59,9 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             fetchMovies: FetchMovies(repository: movies),
             fetchGenres: FetchGenres(repository: genres),
             fetchMovieDetails: FetchMovieDetails(repository: movies),
+            fetchWatchlistIDs: FetchWatchlistIDs(repository: watchlist),
+            addToWatchlist: AddToWatchlist(repository: watchlist),
+            removeFromWatchlist: RemoveFromWatchlist(repository: watchlist),
             imageURLBuilder: TMDBImageURLBuilder(configuration: configuration)
         )
     }

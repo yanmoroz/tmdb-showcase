@@ -21,6 +21,8 @@ extension AppError {
             "Could not reach the server."
         case .decoding:
             "The server returned an unexpected response."
+        case .storage:
+            "Couldn't save to this device."
         case .cancelled:
             "Request cancelled."
         case .unknown:

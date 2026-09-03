@@ -68,6 +68,7 @@ struct CachePolicyTests {
         .notFound,
         .decoding,
         .server(statusCode: 503),
+        .storage,
         .unknown,
     ])
     func everythingElseIsRethrown(error: AppError) {

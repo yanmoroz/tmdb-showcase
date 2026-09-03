@@ -12,6 +12,13 @@ final class MoviesViewControllerTests {
     private weak var trackedSUT: MoviesViewController?
     private var trackedLocation: SourceLocation?
 
+    /// Held on the suite rather than returned from `makeSUT`: Swift Testing
+    /// builds one instance per test, so these are fresh anyway, and the existing
+    /// call sites keep their two-element destructuring.
+    private let watchlistIDs = FetchWatchlistIDsStub()
+    private let addToWatchlist = AddToWatchlistStub()
+    private let removeFromWatchlist = RemoveFromWatchlistStub()
+
     deinit {
         if let trackedLocation {
             #expect(
@@ -411,6 +418,77 @@ final class MoviesViewControllerTests {
         #expect(sut.testSourceControl.isEnabled == true)
     }
 
+    // MARK: - Watchlist
+
+    @Test("A cell's bookmark saves that film")
+    func savesFromACell() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        sut.simulateWatchlistToggle(at: 1)
+
+        try await waitUntil { await self.addToWatchlist.calls.map(\.id) == [2] }
+        #expect(await removeFromWatchlist.calls.isEmpty)
+    }
+
+    @Test("Bookmarking a saved film removes it")
+    func removesAnAlreadySavedFilm() async throws {
+        await watchlistIDs.setResult(.success([2]))
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+        sut.viewWillAppear(false)
+        try await waitUntil { await self.watchlistIDs.callCount >= 1 }
+        await drainPendingWork()
+
+        sut.simulateWatchlistToggle(at: 1)
+
+        try await waitUntil { await self.removeFromWatchlist.calls == [2] }
+        #expect(await addToWatchlist.calls.isEmpty)
+    }
+
+    /// Asserted through behaviour rather than pixels: if the mark had stuck, the
+    /// second tap would try to *remove* the film instead of adding it again.
+    @Test("A failed save puts the mark back")
+    func revertsAFailedSave() async throws {
+        await addToWatchlist.setResult(.failure(.storage))
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        sut.simulateWatchlistToggle(at: 0)
+        try await waitUntil { await self.addToWatchlist.calls.count == 1 }
+        try await waitUntil { sut.view.firstSubview(of: ToastView.self) != nil }
+
+        sut.simulateWatchlistToggle(at: 0)
+        try await waitUntil { await self.addToWatchlist.calls.count == 2 }
+        #expect(await removeFromWatchlist.calls.isEmpty)
+        await drainPendingWork()
+    }
+
+    /// The details screen can change what is saved and there is no channel back,
+    /// so the list re-reads on the way in.
+    @Test("Returning to the list re-reads what is saved")
+    func reloadsSavedIDsOnAppear() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        await watchlistIDs.setResult(.success([1]))
+        sut.viewWillAppear(false)
+        try await waitUntil { await self.watchlistIDs.callCount >= 1 }
+        await drainPendingWork()
+
+        // Film 1 now reads as saved, so bookmarking it removes rather than adds.
+        sut.simulateWatchlistToggle(at: 0)
+        try await waitUntil { await self.removeFromWatchlist.calls == [1] }
+    }
+
     // MARK: - Details
 
     @Test("Selecting a movie pushes its details")
@@ -502,6 +580,9 @@ final class MoviesViewControllerTests {
             fetchMovies: fetchMovies,
             fetchGenres: FetchGenresStub(),
             fetchMovieDetails: FetchMovieDetailsStub(),
+            fetchWatchlistIDs: watchlistIDs,
+            addToWatchlist: addToWatchlist,
+            removeFromWatchlist: removeFromWatchlist,
             imageURLBuilder: MovieImageURLBuilderStub(),
             // Zero interval keeps the debounce observable without waiting on
             // wall-clock: draining the main actor is enough to let it fire.
@@ -561,6 +642,16 @@ private extension MoviesViewController {
             let control = testSourceControl
             control.selectedSegmentIndex = index
             control.sendActions(for: .valueChanged)
+        }
+    }
+
+    func simulateWatchlistToggle(at item: Int) {
+        autoreleasepool {
+            let cell = collectionView(
+                testCollectionView,
+                cellForItemAt: IndexPath(item: item, section: 0)
+            ) as? MovieCell
+            cell?.onToggleWatchlist?()
         }
     }
 
