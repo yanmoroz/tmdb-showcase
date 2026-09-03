@@ -71,6 +71,7 @@ final class MoviesViewController: UIViewController {
     private let refreshControl = UIRefreshControl()
     private let searchDebouncer: Debouncer
     private lazy var filterItem = makeFilterItem()
+    private lazy var sourceControl = makeSourceControl()
 
     init(
         fetchMovies: any FetchMoviesUseCase,
@@ -104,6 +105,7 @@ final class MoviesViewController: UIViewController {
         view.backgroundColor = .systemBackground
         setUpSubviews()
         setUpSearch()
+        navigationItem.titleView = sourceControl
         navigationItem.rightBarButtonItem = filterItem
         reload()
     }
@@ -297,12 +299,42 @@ final class MoviesViewController: UIViewController {
     /// MoviesQuery is Hashable precisely so a query can be compared. Deleting
     /// typed text back to what is already on screen must not reload it.
     private func applyInputs() {
+        updateInputAvailability()
+
         let query = currentQuery
         guard query != feed.query else { return }
         setQuery(query)
     }
 
     // MARK: - Filter
+
+    /// A search overrides both, and `/trending` accepts neither genre nor sort,
+    /// so under either the controls would be there to do nothing.
+    ///
+    /// Read from the field rather than from `searchText`, which the debounce
+    /// leaves a beat behind: in that window the controls would still be live over
+    /// a search that is about to start, and using them would do nothing.
+    private func updateInputAvailability() {
+        let hasSearchText = SearchText(navigationItem.searchController?.searchBar.text ?? "") != nil
+
+        sourceControl.isEnabled = !hasSearchText
+        filterItem.isEnabled = !hasSearchText && filter.allowsRefinement
+    }
+
+    private func makeSourceControl() -> UISegmentedControl {
+        let sources = MoviesFilter.Source.allCases
+        let control = UISegmentedControl(items: sources.map(\.title))
+        control.selectedSegmentIndex = sources.firstIndex(of: filter.source) ?? 0
+
+        control.addAction(
+            UIAction { [weak self, weak control] _ in
+                guard let control, control.selectedSegmentIndex != UISegmentedControl.noSegment else { return }
+                self?.filter.source = sources[control.selectedSegmentIndex]
+            },
+            for: .valueChanged
+        )
+        return control
+    }
 
     private func makeFilterItem() -> UIBarButtonItem {
         UIBarButtonItem(
@@ -440,11 +472,7 @@ extension MoviesViewController: UICollectionViewDataSource {
 extension MoviesViewController: UISearchResultsUpdating {
     func updateSearchResults(for searchController: UISearchController) {
         let input = searchController.searchBar.text ?? ""
-
-        // Enablement follows the field rather than the debounced query: waiting
-        // for the debounce leaves a window where the filter can be opened over a
-        // search that is about to start, and applying it would be a silent no-op.
-        filterItem.isEnabled = SearchText(input) == nil
+        updateInputAvailability()
 
         searchDebouncer.schedule { [weak self] in
             self?.applySearch(input)

@@ -339,6 +339,78 @@ final class MoviesViewControllerTests {
         #expect(sut.navigationItem.rightBarButtonItem?.isEnabled == false)
     }
 
+    // MARK: - Source
+
+    @Test("Choosing Trending asks for the trending feed")
+    func trendingSourceProducesTrendingQuery() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        sut.simulateSourceSelection(.trending)
+        try await waitUntil { await fetchMovies.calls.count == 2 }
+
+        #expect(await fetchMovies.calls.map(\.query).last == .trending(.week))
+    }
+
+    /// The same property that makes a filter survive a search: the source is a
+    /// value on the filter, so switching away and back does not forget it.
+    @Test("A genre survives a detour through Trending")
+    func genreSurvivesTrending() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        sut.applyFilter(MoviesFilter(genreID: 28))
+        try await waitUntil { await fetchMovies.calls.count == 2 }
+
+        sut.simulateSourceSelection(.trending)
+        try await waitUntil { await fetchMovies.calls.count == 3 }
+
+        sut.simulateSourceSelection(.catalogue)
+        try await waitUntil { await fetchMovies.calls.count == 4 }
+
+        #expect(await fetchMovies.calls.map(\.query) == [
+            .popular,
+            .discover(genreID: 28, sortedBy: .popularityDescending),
+            .trending(.week),
+            .discover(genreID: 28, sortedBy: .popularityDescending),
+        ])
+    }
+
+    /// `/trending` accepts neither `with_genres` nor `sort_by`, so the sheet that
+    /// sets them has nothing to offer — the same reason a search disables it.
+    @Test("Trending leaves the filter sheet nothing to set")
+    func disablesFilterUnderTrending() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+        #expect(sut.navigationItem.rightBarButtonItem?.isEnabled == true)
+
+        sut.simulateSourceSelection(.trending)
+        #expect(sut.navigationItem.rightBarButtonItem?.isEnabled == false)
+
+        sut.simulateSourceSelection(.catalogue)
+        #expect(sut.navigationItem.rightBarButtonItem?.isEnabled == true)
+    }
+
+    @Test("A search overrides the source, so the control is disabled too")
+    func disablesSourceControlWhileSearching() async throws {
+        let (sut, fetchMovies) = makeSUT(result: .success(.fixture(items: Movie.fixtures(count: 3))))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { await !fetchMovies.calls.isEmpty }
+
+        sut.simulateSearch("dune")
+        #expect(sut.testSourceControl.isEnabled == false)
+
+        sut.simulateSearch("")
+        #expect(sut.testSourceControl.isEnabled == true)
+    }
+
     // MARK: - Details
 
     @Test("Selecting a movie pushes its details")
@@ -472,6 +544,24 @@ private extension MoviesViewController {
         }
         searchController.searchBar.text = text
         updateSearchResults(for: searchController)
+    }
+
+    var testSourceControl: UISegmentedControl {
+        autoreleasepool {
+            guard let control = navigationItem.titleView as? UISegmentedControl else {
+                preconditionFailure("MoviesViewController stopped showing a source control")
+            }
+            return control
+        }
+    }
+
+    func simulateSourceSelection(_ source: MoviesFilter.Source) {
+        autoreleasepool {
+            guard let index = MoviesFilter.Source.allCases.firstIndex(of: source) else { return }
+            let control = testSourceControl
+            control.selectedSegmentIndex = index
+            control.sendActions(for: .valueChanged)
+        }
     }
 
     func simulateSelection(at item: Int) {

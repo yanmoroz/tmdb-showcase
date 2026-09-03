@@ -76,11 +76,16 @@ Debouncing lives in `Common/Debouncer.swift`, which cancels the previous piece o
 
 The filter turns the screen's single input into two independent ones. `MoviesFilter` is what the user configured; the search text is what they typed; the query is derived from both, and `didSet` on each input is what keeps them from drifting. That is why a filter survives a search: clear the field after filtering by Horror and Horror comes back, not popular.
 
+Popular and trending are a value on `MoviesFilter` rather than a third input, so the
+segmented control writes into the same filter the sheet does and the derived query
+needs no precedence rules. A genre therefore survives a detour through Trending for
+the same reason it survives a search.
+
 The genre catalogue belongs to the filter screen rather than this one — nobody pays for that request unless the filter is opened, and a second loading state never layers over the movie list. `MoviesViewController` knows only the chosen `Genre.ID`. That screen models its own load on the same axis, with the task inside its `.loading` case.
 
 Routing is the plainest form available: the controller presents the modal itself and takes the result through a closure passed to the init. No coordinator, deliberately — that is the seam VIPER's Router and TCA's navigation state will differ on.
 
-Search and filter cannot combine, because TMDB's search endpoint accepts neither `with_genres` nor `sort_by` and `MoviesQuery` makes the combination unrepresentable. In the UI that shows up as the filter button being disabled while a search is active, rather than applying a filter silently discarding typed text.
+Search and filter cannot combine, because TMDB's search endpoint accepts neither `with_genres` nor `sort_by` and `MoviesQuery` makes the combination unrepresentable. `/trending` accepts neither either. In the UI both show up as disabled controls — the filter button under a search or under Trending, the source control under a search — rather than as settings that silently do nothing.
 
 The tests in `MVC-AppTests` measure what that costs. To check pagination you have to stand the whole view up, find the `UICollectionView` by walking the hierarchy, and poll for an in-flight `Task` that is never exposed. Under MVP the same checks become a call to a presenter method.
 
