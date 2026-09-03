@@ -134,11 +134,17 @@ final class MoviesFilterViewController: UIViewController {
         configuration.text = "Couldn't load genres"
         configuration.secondaryText = error.message
 
-        var button = UIButton.Configuration.borderless()
-        button.title = "Retry"
-        configuration.button = button
-        configuration.buttonProperties.primaryAction = UIAction { [weak self] _ in
-            self?.loadCatalogue()
+        // As on the movies and details screens: a geo-block returns the same 403
+        // however many times it is asked, so offering the button would be a dead
+        // end. Cancellation is not retryable either, but retrying is the only
+        // move left when nothing arrived.
+        if error.isRetryable || error == .cancelled {
+            var button = UIButton.Configuration.borderless()
+            button.title = "Retry"
+            configuration.button = button
+            configuration.buttonProperties.primaryAction = UIAction { [weak self] _ in
+                self?.loadCatalogue()
+            }
         }
         return configuration
     }

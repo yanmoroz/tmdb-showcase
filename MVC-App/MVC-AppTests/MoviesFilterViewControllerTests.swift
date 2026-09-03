@@ -107,6 +107,23 @@ final class MoviesFilterViewControllerTests {
         try await waitUntil { await fetchGenres.calls.count == 2 }
     }
 
+    /// The mirror of `hidesRetryForRegionRestricted` on the movies screen: without
+    /// a VPN the same 403 comes back every time, so the button would be a dead end.
+    @Test("A region block offers no retry", arguments: [
+        AppError.regionRestricted,
+        .unauthorized,
+        .notFound,
+        .decoding,
+    ])
+    func hidesRetryForUnfixableFailures(error: AppError) async throws {
+        let (sut, _, _) = try makeSUT(genres: .failure(error))
+
+        sut.loadViewIfNeeded()
+        try await waitUntil { sut.genreStatus?.secondaryText == error.message }
+
+        #expect(sut.genreStatus?.button.title == nil)
+    }
+
     @Test("Apply reports the selection through the closure")
     func applyReportsSelection() async throws {
         let (sut, fetchGenres, applied) = makeSUT(selection: MoviesFilter(genreID: 28))

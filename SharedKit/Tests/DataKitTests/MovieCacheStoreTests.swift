@@ -147,6 +147,102 @@ struct MovieCacheStoreTests {
         #expect(await store.details(for: 2)?.title == "Second")
     }
 
+    // MARK: - Retention
+
+    private static let now = Date(timeIntervalSince1970: 1_700_000_000)
+    private static var beyondWindow: Date { now.addingTimeInterval(-(CacheRetention.maxAge + 60)) }
+
+    @Test("A page past the window is swept on the next write")
+    func dropsPagesPastTheWindow() async throws {
+        let store = try makeStore()
+        let stale = MoviesQueryKey(.search(.fixture("watched once")))
+
+        await store.save(Page.fixture(items: Movie.fixtures(count: 3)), for: stale, at: Self.beyondWindow)
+        await store.save(Page.fixture(items: Movie.fixtures(count: 3)), for: MoviesQueryKey(.popular), at: Self.now)
+
+        #expect(await store.page(for: stale) == nil)
+        #expect(await store.page(for: MoviesQueryKey(.popular)) != nil)
+    }
+
+    @Test("A page inside the window survives")
+    func keepsPagesInsideTheWindow() async throws {
+        let store = try makeStore()
+        let recent = MoviesQueryKey(.search(.fixture("yesterday")))
+
+        await store.save(Page.fixture(items: Movie.fixtures(count: 3)), for: recent, at: Self.now.addingTimeInterval(-3600))
+        await store.save(Page.fixture(items: Movie.fixtures(count: 3)), for: MoviesQueryKey(.popular), at: Self.now)
+
+        #expect(await store.page(for: recent) != nil)
+    }
+
+    /// Cascade is why rows are deleted one at a time: a swept page must take its
+    /// movies with it, or the table grows anyway.
+    @Test("A swept page takes its movie rows with it")
+    func sweepsMovieRowsWithTheirPage() async throws {
+        let store = try makeStore()
+
+        await store.save(
+            Page.fixture(items: Movie.fixtures(count: 5)),
+            for: MoviesQueryKey(.search(.fixture("old"))),
+            at: Self.beyondWindow
+        )
+        await store.save(
+            Page.fixture(items: Movie.fixtures(count: 2, startingAt: 90)),
+            for: MoviesQueryKey(.popular),
+            at: Self.now
+        )
+
+        #expect(try await store.countOfCachedMovies() == 2)
+    }
+
+    @Test("Beyond the cap the oldest pages go first")
+    func capsThePageCount() async throws {
+        let store = try makeStore()
+
+        // All inside the window, so only the cap can be what removes them.
+        for index in 0...CacheRetention.maxPages {
+            await store.save(
+                Page.fixture(items: Movie.fixtures(count: 1)),
+                for: MoviesQueryKey(.search(.fixture("query \(index)"))),
+                at: Self.now.addingTimeInterval(TimeInterval(index))
+            )
+        }
+
+        #expect(try await store.countOfCachedPages() == CacheRetention.maxPages)
+        #expect(await store.page(for: MoviesQueryKey(.search(.fixture("query 0")))) == nil)
+        #expect(await store.page(for: MoviesQueryKey(.search(.fixture("query \(CacheRetention.maxPages)")))) != nil)
+    }
+
+    @Test("Details past the window are swept too")
+    func dropsDetailsPastTheWindow() async throws {
+        let store = try makeStore()
+
+        await store.save(MovieDetails.fixture(id: 7), at: Self.beyondWindow)
+        await store.save(MovieDetails.fixture(id: 8), at: Self.now)
+
+        #expect(await store.details(for: 7) == nil)
+        #expect(await store.details(for: 8) != nil)
+    }
+
+    /// Nothing but a details write used to sweep details, so a reader who only
+    /// browsed lists kept stale ones indefinitely.
+    @Test("A page write sweeps stale details too, and the reverse")
+    func everyWriteSweepsBothTables() async throws {
+        let store = try makeStore()
+        await store.save(MovieDetails.fixture(id: 7), at: Self.beyondWindow)
+
+        await store.save(Page.fixture(items: Movie.fixtures(count: 1)), for: MoviesQueryKey(.popular), at: Self.now)
+
+        #expect(await store.details(for: 7) == nil)
+
+        let stalePage = MoviesQueryKey(.search(.fixture("old")))
+        await store.save(Page.fixture(items: Movie.fixtures(count: 1)), for: stalePage, at: Self.beyondWindow)
+
+        await store.save(MovieDetails.fixture(id: 8), at: Self.now)
+
+        #expect(await store.page(for: stalePage) == nil)
+    }
+
     // MARK: - Factory
 
     /// Its own container per test: a shared one would let writes leak between
@@ -161,6 +257,10 @@ extension MovieCacheStore {
     /// replaced page leaves nothing behind.
     func countOfCachedMovies() throws -> Int {
         try modelContext.fetchCount(FetchDescriptor<CachedMovie>())
+    }
+
+    func countOfCachedPages() throws -> Int {
+        try modelContext.fetchCount(FetchDescriptor<CachedMoviePage>())
     }
 
     func countOfCachedDetails() throws -> Int {

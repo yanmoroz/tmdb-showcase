@@ -30,6 +30,26 @@ struct CacheWindow: Sendable {
     }
 }
 
+/// What the page and details caches keep.
+///
+/// They are network first, so nothing here decides what may be *served* — only
+/// what is worth keeping. Serving is deliberately not age-limited: with no
+/// connection, week-old films are still films, and refusing to show what is
+/// already on disk would be worse than showing it slightly late.
+///
+/// Sweeping on write is what bounds growth. Without it every distinct search
+/// string kept a page and up to twenty movie rows for the life of the install,
+/// and every film whose details were opened kept a row, with nothing to remove
+/// either.
+enum CacheRetention {
+    static let maxAge: TimeInterval = 7 * 24 * 60 * 60
+
+    /// A ceiling for a burst of distinct queries inside the window — a hundred
+    /// searches in an afternoon should not outlive the afternoon by a week.
+    static let maxPages = 50
+    static let maxDetails = 200
+}
+
 enum CacheFreshness {
     /// TMDB's genre list changes on the order of years, so the filter screen
     /// need not pay for a request every time it opens.
