@@ -15,7 +15,8 @@ extension MovieDetails {
         voteAverage: Double = 7.5,
         voteCount: Int = 100,
         genres: [Genre] = [.fixture()],
-        homepage: URL? = nil
+        homepage: URL? = nil,
+        trailer: MovieTrailer? = nil
     ) -> MovieDetails {
         MovieDetails(
             id: id,
@@ -30,7 +31,8 @@ extension MovieDetails {
             voteAverage: voteAverage,
             voteCount: voteCount,
             genres: genres,
-            homepage: homepage
+            homepage: homepage,
+            trailer: trailer
         )
     }
 }

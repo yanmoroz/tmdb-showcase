@@ -18,7 +18,10 @@ public struct TMDBMoviesRepository: MoviesRepository {
 
     public func movieDetails(id: Movie.ID) async throws(AppError) -> MovieDetails {
         let response = try await client.get(
-            TMDBEndpoint(path: "movie/\(id)"),
+            TMDBEndpoint(
+                path: "movie/\(id)",
+                queryItems: [URLQueryItem(name: "append_to_response", value: "videos")]
+            ),
             as: MovieDetailsDTO.self
         )
         return response.toDomain()

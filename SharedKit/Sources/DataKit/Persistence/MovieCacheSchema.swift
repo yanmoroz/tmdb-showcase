@@ -122,6 +122,23 @@ final class CachedGenre {
 /// A stored value rather than a row: catalogue genres are a resource the filter
 /// screen browses, while a film's genres are an attribute of that film with no
 /// identity of their own. A Codable array also keeps its order for free.
+/// Stored beside the details for the same reason genres are: a trailer has no
+/// identity of its own, and an offline card without one would be worse than the
+/// online card it is standing in for.
+struct CachedTrailerValue: Codable, Hashable {
+    var youtubeKey: String
+    var name: String
+
+    init(_ trailer: MovieTrailer) {
+        self.youtubeKey = trailer.youtubeKey
+        self.name = trailer.name
+    }
+
+    var domain: MovieTrailer {
+        MovieTrailer(youtubeKey: youtubeKey, name: name)
+    }
+}
+
 struct CachedGenreValue: Codable, Hashable {
     var id: Int
     var name: String
@@ -150,6 +167,7 @@ final class CachedMovieDetails {
     var voteCount: Int
     var genres: [CachedGenreValue]
     var homepage: URL?
+    var trailer: CachedTrailerValue?
 
     init(_ details: MovieDetails, updatedAt: Date) {
         self.movieID = details.id
@@ -166,6 +184,7 @@ final class CachedMovieDetails {
         self.voteCount = details.voteCount
         self.genres = details.genres.map(CachedGenreValue.init)
         self.homepage = details.homepage
+        self.trailer = details.trailer.map(CachedTrailerValue.init)
     }
 
     var domain: MovieDetails {
@@ -182,7 +201,8 @@ final class CachedMovieDetails {
             voteAverage: voteAverage,
             voteCount: voteCount,
             genres: genres.map(\.domain),
-            homepage: homepage
+            homepage: homepage,
+            trailer: trailer?.domain
         )
     }
 }

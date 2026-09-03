@@ -92,7 +92,7 @@ The list of popular movies is done: poster grid, pagination, loading / empty / f
 `FetchMovieDetails` only to hand on — a router would own that, and it is one of the
 seams the other five architectures change. It is seeded with the `Movie` the list
 already has, so title, artwork, year, rating and overview are on screen before
-`/movie/{id}` is asked; only tagline, genres, runtime and the homepage wait for it.
+`/movie/{id}` is asked; only tagline, genres, runtime and the trailer wait for it.
 That also means a film never opened before still shows a usable card offline, with
 the failure inline rather than over it.
 

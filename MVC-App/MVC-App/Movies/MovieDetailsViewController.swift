@@ -1,5 +1,6 @@
 import UIKit
 import NukeUI
+import YouTubeiOSPlayerHelper
 import DomainKit
 
 /// Seeded with the `Movie` the list already holds, so the screen is never blank:
@@ -22,7 +23,8 @@ final class MovieDetailsViewController: UIViewController {
         let genres: String?
         let runtime: String?
         let overview: String?
-        let homepage: URL?
+        /// The YouTube id, not a URL: the player takes an id.
+        let trailerKey: String?
     }
 
     /// Only so a test can address one label among several; `firstSubview(of:)`
@@ -55,7 +57,10 @@ final class MovieDetailsViewController: UIViewController {
     private let genresLabel = UILabel()
     private let taglineLabel = UILabel()
     private let overviewLabel = UILabel()
-    private lazy var homepageButton = makeHomepageButton()
+    private let trailerView = YTPlayerView()
+    /// The player reloads only when the id changes: re-rendering on any other
+    /// state change would restart a video the reader is already watching.
+    private var loadedTrailerKey: String?
     private lazy var statusView = UIContentUnavailableView(
         configuration: UIContentUnavailableConfiguration.loading()
     )
@@ -169,7 +174,12 @@ final class MovieDetailsViewController: UIViewController {
         set(taglineLabel, model.tagline)
         set(overviewLabel, model.overview)
 
-        homepageButton.isHidden = model.homepage == nil
+        trailerView.isHidden = model.trailerKey == nil
+        if let trailerKey = model.trailerKey, trailerKey != loadedTrailerKey {
+            loadedTrailerKey = trailerKey
+            trailerView.delegate = self
+            trailerView.load(withVideoId: trailerKey)
+        }
     }
 
     private func set(_ label: UILabel, _ text: String?) {
@@ -219,12 +229,15 @@ final class MovieDetailsViewController: UIViewController {
             stack.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -32),
 
             backdropView.heightAnchor.constraint(equalTo: backdropView.widthAnchor, multiplier: 9.0 / 16.0),
+            trailerView.heightAnchor.constraint(equalTo: trailerView.widthAnchor, multiplier: 9.0 / 16.0),
             posterView.widthAnchor.constraint(equalToConstant: 100),
             posterView.heightAnchor.constraint(equalTo: posterView.widthAnchor, multiplier: 3.0 / 2.0),
         ])
     }
 
     private func makeContentStack() -> UIStackView {
+        trailerView.backgroundColor = .systemBackground
+
         for view in [backdropView, posterView] {
             view.contentMode = .scaleAspectFill
             view.clipsToBounds = true
@@ -252,7 +265,7 @@ final class MovieDetailsViewController: UIViewController {
         header.alignment = .top
 
         let stack = UIStackView(arrangedSubviews: [
-            backdropView, header, taglineLabel, overviewLabel, homepageButton, statusView,
+            backdropView, header, taglineLabel, overviewLabel, trailerView, statusView,
         ])
         stack.axis = .vertical
         stack.spacing = 16
@@ -272,20 +285,19 @@ final class MovieDetailsViewController: UIViewController {
         label.numberOfLines = 0
         label.adjustsFontForContentSizeCategory = true
     }
+}
 
-    private func makeHomepageButton() -> UIButton {
-        var configuration = UIButton.Configuration.bordered()
-        configuration.title = "Open homepage"
-        configuration.image = UIImage(systemName: "safari")
-        configuration.imagePadding = 6
-
-        return UIButton(
-            configuration: configuration,
-            primaryAction: UIAction { [weak self] _ in
-                guard let url = self?.loadedDetails?.homepage else { return }
-                UIApplication.shared.open(url)
-            }
-        )
+extension MovieDetailsViewController: YTPlayerViewDelegate {
+    /// Read once, when the player builds its web view — which is why the
+    /// delegate is assigned before `load(withVideoId:)` rather than after.
+    ///
+    /// This covers the web view and the player's own loading view. It does not
+    /// reach the page: the bundled `YTPlayerView-iframe-player.html` hard-codes
+    /// `background-color:#000000` on `html` and `body`, and the library gives no
+    /// hook to restyle it. That black is only visible if the iframe fails to
+    /// cover the view, which the 16:9 constraint prevents.
+    func playerViewPreferredWebViewBackgroundColor(_ playerView: YTPlayerView) -> UIColor {
+        .systemBackground
     }
 }
 
@@ -315,16 +327,8 @@ extension MovieDetailsViewController.Model {
             runtime: MovieFormatting.runtime(minutes: details?.runtime),
             // Not optional in the domain, but TMDB sends "" for a missing one.
             overview: card.overview.isEmpty ? nil : card.overview,
-            homepage: details?.homepage.flatMap(Self.openable)
+            trailerKey: details?.trailer?.youtubeKey
         )
-    }
-
-    /// TMDB stores whatever the studio typed. A link we cannot open is not a link.
-    private static func openable(_ url: URL) -> URL? {
-        switch url.scheme?.lowercased() {
-        case "http", "https": url
-        default: nil
-        }
     }
 }
 

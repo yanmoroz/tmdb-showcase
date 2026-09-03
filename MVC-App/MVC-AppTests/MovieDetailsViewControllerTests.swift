@@ -22,7 +22,6 @@ struct MovieDetailsModelTests {
         #expect(model.tagline == nil)
         #expect(model.genres == nil)
         #expect(model.runtime == nil)
-        #expect(model.homepage == nil)
     }
 
     @Test("Loaded details win over the seed")
@@ -69,18 +68,6 @@ struct MovieDetailsModelTests {
         )
 
         #expect(model.year == nil)
-    }
-
-    @Test("Only a web address becomes a homepage link", arguments: [
-        ("https://example.com", true),
-        ("http://example.com", true),
-        ("mailto:hello@example.com", false),
-        ("ftp://example.com", false),
-    ])
-    func keepsOnlyWebHomepages(address: String, kept: Bool) {
-        let model = makeModel(details: .fixture(homepage: URL(string: address)))
-
-        #expect((model.homepage != nil) == kept)
     }
 
     @Test("Genres are joined, and absent when there are none")

@@ -18,6 +18,8 @@ public struct MovieDetails: Identifiable, Hashable, Sendable {
     /// Details carry genre objects rather than identifiers.
     public let genres: [Genre]
     public let homepage: URL?
+    /// `nil` when TMDB lists no playable trailer for the film.
+    public let trailer: MovieTrailer?
 
     public init(
         id: Int,
@@ -32,7 +34,8 @@ public struct MovieDetails: Identifiable, Hashable, Sendable {
         voteAverage: Double,
         voteCount: Int,
         genres: [Genre],
-        homepage: URL?
+        homepage: URL?,
+        trailer: MovieTrailer?
     ) {
         self.id = id
         self.title = title
@@ -47,5 +50,6 @@ public struct MovieDetails: Identifiable, Hashable, Sendable {
         self.voteCount = voteCount
         self.genres = genres
         self.homepage = homepage
+        self.trailer = trailer
     }
 }

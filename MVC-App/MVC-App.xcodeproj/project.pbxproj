@@ -11,6 +11,7 @@
 		A35D39673047697200068590 /* DomainKitTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = A35D39663047697200068590 /* DomainKitTestSupport */; };
 		A35D396A30476AFE00068590 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = A35D396930476AFE00068590 /* Nuke */; };
 		A35D396C30476AFE00068590 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = A35D396B30476AFE00068590 /* NukeUI */; };
+		A35D39CB30496E9E00068590 /* YouTubeiOSPlayerHelper in Frameworks */ = {isa = PBXBuildFile; productRef = A35D39CA30496E9E00068590 /* YouTubeiOSPlayerHelper */; };
 		A3E3431C3044544A00006035 /* DataKit in Frameworks */ = {isa = PBXBuildFile; productRef = A3E3431B3044544A00006035 /* DataKit */; };
 		A3E3431E3044544A00006035 /* DomainKit in Frameworks */ = {isa = PBXBuildFile; productRef = A3E3431D3044544A00006035 /* DomainKit */; };
 /* End PBXBuildFile section */
@@ -76,6 +77,7 @@
 				A3E3431C3044544A00006035 /* DataKit in Frameworks */,
 				A3E3431E3044544A00006035 /* DomainKit in Frameworks */,
 				A35D396C30476AFE00068590 /* NukeUI in Frameworks */,
+				A35D39CB30496E9E00068590 /* YouTubeiOSPlayerHelper in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -159,6 +161,7 @@
 				A3E3431D3044544A00006035 /* DomainKit */,
 				A35D396930476AFE00068590 /* Nuke */,
 				A35D396B30476AFE00068590 /* NukeUI */,
+				A35D39CA30496E9E00068590 /* YouTubeiOSPlayerHelper */,
 			);
 			productName = "MVC-App";
 			productReference = A37C94DE304452DB0091E1A7 /* MVC-App.app */;
@@ -194,6 +197,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				A35D396830476AFE00068590 /* XCRemoteSwiftPackageReference "Nuke" */,
+				A35D39C930496E9E00068590 /* XCRemoteSwiftPackageReference "youtube-ios-player-helper" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A37C94DF304452DB0091E1A7 /* Products */;
@@ -517,6 +521,14 @@
 				minimumVersion = 13.2.0;
 			};
 		};
+		A35D39C930496E9E00068590 /* XCRemoteSwiftPackageReference "youtube-ios-player-helper" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/youtube/youtube-ios-player-helper";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.4;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -537,6 +549,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A35D396830476AFE00068590 /* XCRemoteSwiftPackageReference "Nuke" */;
 			productName = NukeUI;
+		};
+		A35D39CA30496E9E00068590 /* YouTubeiOSPlayerHelper */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A35D39C930496E9E00068590 /* XCRemoteSwiftPackageReference "youtube-ios-player-helper" */;
+			productName = YouTubeiOSPlayerHelper;
 		};
 		A3E3431B3044544A00006035 /* DataKit */ = {
 			isa = XCSwiftPackageProductDependency;

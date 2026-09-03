@@ -15,6 +15,7 @@ struct MovieDetailsDTO: Decodable, Sendable {
     let voteCount: Int?
     let genres: [GenreDTO]?
     let homepage: String?
+    let videos: VideoListDTO?
 }
 
 extension MovieDetailsDTO {
@@ -33,7 +34,8 @@ extension MovieDetailsDTO {
             voteAverage: voteAverage ?? 0,
             voteCount: voteCount ?? 0,
             genres: (genres ?? []).map { $0.toDomain() },
-            homepage: homepage.nonEmpty.flatMap(URL.init(string:))
+            homepage: homepage.nonEmpty.flatMap(URL.init(string:)),
+            trailer: videos?.trailer
         )
     }
 }
