@@ -20,9 +20,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = scene as? UIWindowScene else { return }
 
         let window = UIWindow(windowScene: windowScene)
-        window.rootViewController = isRunningTests
-            ? UIViewController()
-            : UINavigationController(rootViewController: makeRoot())
+        window.rootViewController = isRunningTests ? UIViewController() : makeRoot()
         window.makeKeyAndVisible()
         self.window = window
     }
@@ -55,13 +53,10 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             genres = CachingGenresRepository(wrapping: genres, cache: cache)
         }
 
-        return MoviesViewController(
-            fetchMovies: FetchMovies(repository: movies),
-            fetchGenres: FetchGenres(repository: genres),
-            fetchMovieDetails: FetchMovieDetails(repository: movies),
-            fetchWatchlistIDs: FetchWatchlistIDs(repository: watchlist),
-            addToWatchlist: AddToWatchlist(repository: watchlist),
-            removeFromWatchlist: RemoveFromWatchlist(repository: watchlist),
+        return CompositionRoot.makeTabBar(
+            movies: movies,
+            genres: genres,
+            watchlist: watchlist,
             imageURLBuilder: TMDBImageURLBuilder(configuration: configuration)
         )
     }

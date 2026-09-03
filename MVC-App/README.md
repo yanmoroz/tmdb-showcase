@@ -31,15 +31,19 @@ MVC-App/
 ├── MVC-App.xcodeproj
 ├── MVC-App/
 │   ├── AppDelegate.swift
-│   ├── SceneDelegate.swift          window and composition root
+│   ├── SceneDelegate.swift          window; opens the stores
+│   ├── CompositionRoot.swift        builds the tab bar and both stacks
 │   ├── AppConfig.swift              reads the TMDB token from Info.plist
 │   ├── Movies/
 │   │   ├── MoviesViewController.swift
 │   │   ├── MoviesFilterViewController.swift
 │   │   ├── MovieDetailsViewController.swift
-│   │   ├── MoviesFilter.swift
-│   │   └── MovieCell.swift
+│   │   └── MoviesFilter.swift
+│   ├── Watchlist/
+│   │   └── WatchlistViewController.swift
 │   ├── Common/
+│   │   ├── MovieCell.swift
+│   │   ├── MovieGrid.swift
 │   │   ├── Debouncer.swift
 │   │   ├── MovieFormatting.swift
 │   │   ├── ToastView.swift
@@ -50,7 +54,11 @@ MVC-App/
 └── MVC-AppTests/
 ```
 
-`Common/` is the seed of a shared UI package: its components take flat values and know nothing about the controller. Extraction is planned for the MVP stage, once it is clear what actually repeats.
+`Common/` is the seed of a shared UI package: its components take flat values and know nothing about the controller. Extraction is planned for the MVP stage, once it is clear what actually repeats. `MovieCell` and `MovieGrid` moved here when the Watchlist gained the same grid — two callers is what makes a thing shared.
+
+The Watchlist is the same grid and the same cell, so on that screen every bookmark is filled and tapping one un-saves. The row does not disappear when it does: the mark empties and the film goes on the next appearance, which undoes a mis-tap in place and avoids reconciling a delete against a grid being scrolled. Both list screens re-read on `viewWillAppear` because nothing here observes anything — replacing that is one of the seams the other five architectures will show.
+
+`CompositionRoot` takes repositories rather than opening stores, so the scene delegate keeps that job and the wiring can be exercised without touching the disk. Each tab owns its navigation controller: `showDetails(for:)` guards on being the top view controller, which only holds per stack.
 
 ## Running it
 

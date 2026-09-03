@@ -93,7 +93,7 @@ string catalogues for no gain on the thing this repository is actually comparing
 
 `DomainKit` and `DataKit` are done for the Movies feature: entities, `AppError`, the protocols and their TMDB implementations, error classification, the image URL builder, plus fixtures and stubs for tests.
 
-`MVC-App` has a working Movies screen: a poster grid with pagination, error handling and pull-to-refresh, popular and trending feeds, search with debounce, a modal screen for the genre filter and sort order, and a details screen with its trailer. It reads through a SwiftData cache, so a warm launch shows films before the network answers and keeps working without one. Next: the remaining five architectures. Watchlist comes separately.
+`MVC-App` has a working Movies screen: a poster grid with pagination, error handling and pull-to-refresh, popular and trending feeds, search with debounce, a modal screen for the genre filter and sort order, and a details screen with its trailer. It reads through a SwiftData cache, so a warm launch shows films before the network answers and keeps working without one. The Watchlist tab is in too, on its own store. Next: the remaining five architectures.
 
 ## Setting up
 
