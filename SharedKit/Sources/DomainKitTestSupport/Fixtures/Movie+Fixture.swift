@@ -1,5 +1,5 @@
-import Foundation
 import DomainKit
+import Foundation
 
 extension Movie {
     public static func fixture(
@@ -27,7 +27,11 @@ extension Movie {
     }
 
     /// `count` movies with identifiers `startingAt..<startingAt + count`.
-    public static func fixtures(count: Int, startingAt startID: Int = 1) -> [Movie] {
-        (startID..<(startID + count)).map { .fixture(id: $0, title: "Fixture Movie \($0)") }
+    public static func fixtures(count: Int, startingAt startID: Int = 1)
+        -> [Movie]
+    {
+        (startID..<(startID + count)).map {
+            .fixture(id: $0, title: "Fixture Movie \($0)")
+        }
     }
 }

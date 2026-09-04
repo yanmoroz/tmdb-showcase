@@ -77,8 +77,10 @@ Sources/DomainKit/
 ├── Errors/         AppError (+ NetworkFailure)
 ├── Images/         MovieImageURLBuilder
 ├── Repositories/   MoviesRepository, GenresRepository, WatchlistRepository
-└── UseCases/       FetchMovies, FetchMovieDetails, FetchGenres, FetchWatchlist,
-                    FetchWatchlistIDs, AddToWatchlist, RemoveFromWatchlist
+└── UseCases/
+    ├── Movies/     FetchMovies, FetchMovieDetails, FetchGenres
+    └── Watchlist/  FetchWatchlist, FetchWatchlistIDs, AddToWatchlist,
+                    RemoveFromWatchlist
 ```
 
 A use case is a protocol with `callAsFunction` plus a struct implementation. Presentation depends on the protocol (`any FetchMoviesUseCase`), so presenter and view model tests substitute a use case stub rather than a fake repository.

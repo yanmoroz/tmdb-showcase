@@ -30,16 +30,11 @@ struct PageTests {
 
     @Test("An empty result is empty and has no continuation")
     func empty() {
-        let page = Page<Movie>.empty()
+        let page = Page<Movie>.fixture(items: [], totalPages: 0)
 
         #expect(page.isEmpty)
         #expect(page.totalResults == 0)
         #expect(!page.hasNextPage)
         #expect(page.nextPage == nil)
-    }
-
-    @Test("An empty result remembers the requested page number")
-    func emptyKeepsRequestedPage() {
-        #expect(Page<Movie>.empty(page: 7).page == 7)
     }
 }

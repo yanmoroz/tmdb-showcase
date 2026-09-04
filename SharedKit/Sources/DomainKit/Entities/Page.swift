@@ -24,9 +24,4 @@ public struct Page<Item: Hashable & Sendable>: Hashable, Sendable {
     public var nextPage: Int? { hasNextPage ? page + 1 : nil }
 
     public var isEmpty: Bool { items.isEmpty }
-
-    /// An empty feed: no items and no page to follow.
-    public static func empty(page: Int = 1) -> Page {
-        Page(items: [], page: page, totalPages: 0, totalResults: 0)
-    }
 }
