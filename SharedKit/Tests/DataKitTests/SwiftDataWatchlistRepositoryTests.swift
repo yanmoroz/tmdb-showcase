@@ -67,7 +67,7 @@ struct SwiftDataWatchlistRepositoryTests {
 
     @Test("The stand-in reports that it cannot save")
     func unavailableWatchlistReportsStorageFailures() async throws {
-        let repository = UnavailableWatchlist()
+        let repository = UnavailableWatchlistRepository()
 
         #expect(try await repository.savedIdentifiers().isEmpty)
         await #expect(throws: AppError.storage) { try await repository.save(.fixture()) }

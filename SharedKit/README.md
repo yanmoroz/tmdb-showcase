@@ -99,10 +99,11 @@ Sources/DataKit/
 ├── Persistence/    CachePolicy
 │   ├── MovieCache/ MovieCache, MovieCacheContainer, MovieCacheSchema,
 │   │               MovieCacheStore, GenreCacheStore, MoviesQueryKey
-│   └── Watchlist/  SwiftDataWatchlistRepository, UnavailableWatchlist,
-│                   WatchlistContainer, WatchlistSchema
+│   └── Watchlist/  SwiftDataWatchlistRepository, WatchlistContainer,
+│                   WatchlistSchema
 ├── Repositories/   TMDBMoviesRepository, TMDBGenresRepository,
-│                   CachingMoviesRepository, CachingGenresRepository
+│                   CachingMoviesRepository, CachingGenresRepository,
+│                   UnavailableWatchlistRepository
 └── Images/         TMDBImageURLBuilder
 ```
 

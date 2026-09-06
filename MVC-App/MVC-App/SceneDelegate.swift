@@ -41,7 +41,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Unlike the cache, a watchlist that will not open is not something to
         // run silently without: the stand-in reports the failure when the reader
         // actually tries to save.
-        var watchlist: any WatchlistRepository = UnavailableWatchlist()
+        var watchlist: any WatchlistRepository = UnavailableWatchlistRepository()
         if let stored = SwiftDataWatchlistRepository() {
             watchlist = stored
         }

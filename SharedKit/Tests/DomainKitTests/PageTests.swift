@@ -1,12 +1,16 @@
-import Testing
 import DomainKit
 import DomainKitTestSupport
+import Testing
 
 @Suite("Page")
 struct PageTests {
     @Test("There is a next page until the current one is last")
     func hasNextPageInMiddle() {
-        let page = Page.fixture(items: Movie.fixtures(count: 20), page: 2, totalPages: 5)
+        let page = Page.fixture(
+            items: Movie.fixtures(count: 20),
+            page: 2,
+            totalPages: 5
+        )
 
         #expect(page.hasNextPage)
         #expect(page.nextPage == 3)
@@ -14,7 +18,11 @@ struct PageTests {
 
     @Test("The last page has no next")
     func noNextPageOnLast() {
-        let page = Page.fixture(items: Movie.fixtures(count: 3), page: 5, totalPages: 5)
+        let page = Page.fixture(
+            items: Movie.fixtures(count: 3),
+            page: 5,
+            totalPages: 5
+        )
 
         #expect(!page.hasNextPage)
         #expect(page.nextPage == nil)
@@ -22,7 +30,11 @@ struct PageTests {
 
     @Test("A single page has no next")
     func singlePage() {
-        let page = Page.fixture(items: Movie.fixtures(count: 3), page: 1, totalPages: 1)
+        let page = Page.fixture(
+            items: Movie.fixtures(count: 3),
+            page: 1,
+            totalPages: 1
+        )
 
         #expect(!page.hasNextPage)
         #expect(page.nextPage == nil)

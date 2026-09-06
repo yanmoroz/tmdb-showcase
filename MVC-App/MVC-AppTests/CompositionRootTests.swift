@@ -38,7 +38,7 @@ struct CompositionRootTests {
         CompositionRoot.makeTabBar(
             movies: MoviesRepositoryStub(),
             genres: GenresRepositoryStub(),
-            watchlist: UnavailableWatchlist(),
+            watchlist: UnavailableWatchlistRepository(),
             imageURLBuilder: MovieImageURLBuilderStub()
         )
     }

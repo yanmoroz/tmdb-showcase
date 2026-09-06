@@ -2,7 +2,7 @@ import DomainKit
 
 /// Stands in when the store will not open, so the app still runs and the failure
 /// reports itself the moment the reader tries to save something.
-public struct UnavailableWatchlist: WatchlistRepository {
+public struct UnavailableWatchlistRepository: WatchlistRepository {
     public init() {}
 
     public func savedMovies() async throws(AppError) -> [Movie] { [] }

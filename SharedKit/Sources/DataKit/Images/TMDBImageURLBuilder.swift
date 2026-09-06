@@ -6,11 +6,11 @@ import DomainKit
 /// Sizes are enums, not strings: TMDB accepts a fixed set and answers 404 for
 /// anything else.
 public struct TMDBImageURLBuilder: Sendable {
-    public enum PosterSize: String, Sendable, CaseIterable {
+    enum PosterSize: String, Sendable {
         case w154, w342, w500, original
     }
 
-    public enum BackdropSize: String, Sendable, CaseIterable {
+    enum BackdropSize: String, Sendable {
         case w300, w780, w1280, original
     }
 
@@ -20,11 +20,11 @@ public struct TMDBImageURLBuilder: Sendable {
         self.imageBaseURL = configuration.imageBaseURL
     }
 
-    public func posterURL(path: String?, size: PosterSize) -> URL? {
+    func posterURL(path: String?, size: PosterSize) -> URL? {
         url(path: path, size: size.rawValue)
     }
 
-    public func backdropURL(path: String?, size: BackdropSize) -> URL? {
+    func backdropURL(path: String?, size: BackdropSize) -> URL? {
         url(path: path, size: size.rawValue)
     }
 
