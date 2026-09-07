@@ -10,6 +10,7 @@
 		A3DD97E9304EDC1500F87C7F /* YouTubeiOSPlayerHelper in Frameworks */ = {isa = PBXBuildFile; productRef = A3DD97E8304EDC1500F87C7F /* YouTubeiOSPlayerHelper */; };
 		A3DD97EC304EDC5D00F87C7F /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = A3DD97EB304EDC5D00F87C7F /* Nuke */; };
 		A3DD97EE304EDC5D00F87C7F /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = A3DD97ED304EDC5D00F87C7F /* NukeUI */; };
+		A3DD9816304EE21300F87C7F /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = A3DD9815304EE21300F87C7F /* README.md */; };
 		AA00000000BU1LDF11E000006 /* DomainKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000PR0DUCT00000002 /* DomainKit */; };
 		AA00000000BU1LDF11E000007 /* DataKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000PR0DUCT00000003 /* DataKit */; };
 		AA00000000BU1LDF11E000008 /* DomainKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000PR0DUCT00000004 /* DomainKit */; };
@@ -29,6 +30,7 @@
 /* Begin PBXFileReference section */
 		A3DD97A1304EDAFC00F87C7F /* MVP-App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MVP-App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A3DD97B7304EDAFD00F87C7F /* MVP-AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "MVP-AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A3DD9815304EE21300F87C7F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		AA00000000C0NF1600000001 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Config.xcconfig; path = ../Config.xcconfig; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -90,6 +92,7 @@
 				A3DD97BA304EDAFD00F87C7F /* MVP-AppTests */,
 				A3DD97A2304EDAFC00F87C7F /* Products */,
 				AA00000000C0NF1600000001 /* Config.xcconfig */,
+				A3DD9815304EE21300F87C7F /* README.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -205,6 +208,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A3DD9816304EE21300F87C7F /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
