@@ -11,10 +11,10 @@
 		A3DD97EC304EDC5D00F87C7F /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = A3DD97EB304EDC5D00F87C7F /* Nuke */; };
 		A3DD97EE304EDC5D00F87C7F /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = A3DD97ED304EDC5D00F87C7F /* NukeUI */; };
 		A3DD9816304EE21300F87C7F /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = A3DD9815304EE21300F87C7F /* README.md */; };
-		AA00000000BU1LDF11E000006 /* DomainKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000PR0DUCT00000002 /* DomainKit */; };
-		AA00000000BU1LDF11E000007 /* DataKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000PR0DUCT00000003 /* DataKit */; };
-		AA00000000BU1LDF11E000008 /* DomainKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000PR0DUCT00000004 /* DomainKit */; };
-		AA00000000BU1LDF11E000009 /* DomainKitTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000PR0DUCT00000005 /* DomainKitTestSupport */; };
+		AA0000000000000000000006 /* DomainKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000000000000000000002 /* DomainKit */; };
+		AA0000000000000000000007 /* DataKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000000000000000000003 /* DataKit */; };
+		AA0000000000000000000008 /* DomainKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000000000000000000004 /* DomainKit */; };
+		AA0000000000000000000009 /* DomainKitTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000000000000000000005 /* DomainKitTestSupport */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -31,7 +31,7 @@
 		A3DD97A1304EDAFC00F87C7F /* MVP-App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MVP-App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A3DD97B7304EDAFD00F87C7F /* MVP-AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "MVP-AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A3DD9815304EE21300F87C7F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		AA00000000C0NF1600000001 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Config.xcconfig; path = ../Config.xcconfig; sourceTree = SOURCE_ROOT; };
+		AA0000000000000000000001 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Config.xcconfig; path = ../Config.xcconfig; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -65,8 +65,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA00000000BU1LDF11E000006 /* DomainKit in Frameworks */,
-				AA00000000BU1LDF11E000007 /* DataKit in Frameworks */,
+				AA0000000000000000000006 /* DomainKit in Frameworks */,
+				AA0000000000000000000007 /* DataKit in Frameworks */,
 				A3DD97EE304EDC5D00F87C7F /* NukeUI in Frameworks */,
 				A3DD97E9304EDC1500F87C7F /* YouTubeiOSPlayerHelper in Frameworks */,
 				A3DD97EC304EDC5D00F87C7F /* Nuke in Frameworks */,
@@ -77,8 +77,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA00000000BU1LDF11E000008 /* DomainKit in Frameworks */,
-				AA00000000BU1LDF11E000009 /* DomainKitTestSupport in Frameworks */,
+				AA0000000000000000000008 /* DomainKit in Frameworks */,
+				AA0000000000000000000009 /* DomainKitTestSupport in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -91,7 +91,7 @@
 				A3DD97A3304EDAFC00F87C7F /* MVP-App */,
 				A3DD97BA304EDAFD00F87C7F /* MVP-AppTests */,
 				A3DD97A2304EDAFC00F87C7F /* Products */,
-				AA00000000C0NF1600000001 /* Config.xcconfig */,
+				AA0000000000000000000001 /* Config.xcconfig */,
 				A3DD9815304EE21300F87C7F /* README.md */,
 			);
 			sourceTree = "<group>";
@@ -125,8 +125,8 @@
 			);
 			name = "MVP-App";
 			packageProductDependencies = (
-				AA00000000PR0DUCT00000002 /* DomainKit */,
-				AA00000000PR0DUCT00000003 /* DataKit */,
+				AA0000000000000000000002 /* DomainKit */,
+				AA0000000000000000000003 /* DataKit */,
 				A3DD97E8304EDC1500F87C7F /* YouTubeiOSPlayerHelper */,
 				A3DD97EB304EDC5D00F87C7F /* Nuke */,
 				A3DD97ED304EDC5D00F87C7F /* NukeUI */,
@@ -153,8 +153,8 @@
 			);
 			name = "MVP-AppTests";
 			packageProductDependencies = (
-				AA00000000PR0DUCT00000004 /* DomainKit */,
-				AA00000000PR0DUCT00000005 /* DomainKitTestSupport */,
+				AA0000000000000000000004 /* DomainKit */,
+				AA0000000000000000000005 /* DomainKitTestSupport */,
 			);
 			productName = "MVP-AppTests";
 			productReference = A3DD97B7304EDAFD00F87C7F /* MVP-AppTests.xctest */;
@@ -309,7 +309,7 @@
 		};
 		A3DD97CD304EDAFD00F87C7F /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = AA00000000C0NF1600000001 /* Config.xcconfig */;
+			baseConfigurationReference = AA0000000000000000000001 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -374,7 +374,7 @@
 		};
 		A3DD97CE304EDAFD00F87C7F /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = AA00000000C0NF1600000001 /* Config.xcconfig */;
+			baseConfigurationReference = AA0000000000000000000001 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -541,19 +541,19 @@
 			package = A3DD97EA304EDC5D00F87C7F /* XCRemoteSwiftPackageReference "Nuke" */;
 			productName = NukeUI;
 		};
-		AA00000000PR0DUCT00000002 /* DomainKit */ = {
+		AA0000000000000000000002 /* DomainKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = DomainKit;
 		};
-		AA00000000PR0DUCT00000003 /* DataKit */ = {
+		AA0000000000000000000003 /* DataKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = DataKit;
 		};
-		AA00000000PR0DUCT00000004 /* DomainKit */ = {
+		AA0000000000000000000004 /* DomainKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = DomainKit;
 		};
-		AA00000000PR0DUCT00000005 /* DomainKitTestSupport */ = {
+		AA0000000000000000000005 /* DomainKitTestSupport */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = DomainKitTestSupport;
 		};
