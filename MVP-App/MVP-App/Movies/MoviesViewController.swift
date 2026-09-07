@@ -6,8 +6,10 @@ import PresentationKit
 /// query, no page cursor and no `Task`.
 final class MoviesViewController: UIViewController {
     private let presenter: MoviesPresenter
-    private let onShowFilter: (MoviesFilter, @escaping (MoviesFilter) -> Void) -> Void
-    private let onShowDetails: (Movie) -> Void
+    /// Composition supplies the destination; this controller supplies the
+    /// presentation. `makeDetails` is optional only until that screen exists.
+    private let makeFilter: (MoviesFilter, @escaping (MoviesFilter) -> Void) -> UIViewController
+    private let makeDetails: (Movie) -> UIViewController?
 
     private var items: [MovieCell.Model] = []
 
@@ -20,12 +22,12 @@ final class MoviesViewController: UIViewController {
 
     init(
         presenter: MoviesPresenter,
-        onShowFilter: @escaping (MoviesFilter, @escaping (MoviesFilter) -> Void) -> Void,
-        onShowDetails: @escaping (Movie) -> Void
+        makeFilter: @escaping (MoviesFilter, @escaping (MoviesFilter) -> Void) -> UIViewController,
+        makeDetails: @escaping (Movie) -> UIViewController?
     ) {
         self.presenter = presenter
-        self.onShowFilter = onShowFilter
-        self.onShowDetails = onShowDetails
+        self.makeFilter = makeFilter
+        self.makeDetails = makeDetails
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -224,14 +226,16 @@ extension MoviesViewController: MoviesView {
     func showFilter(_ selection: MoviesFilter) {
         guard presentedViewController == nil else { return }
 
-        onShowFilter(selection) { [weak self] filter in
+        let filter = makeFilter(selection) { [weak self] filter in
             self?.presenter.didApplyFilter(filter)
         }
+        present(UINavigationController(rootViewController: filter), animated: true)
     }
 
     func showDetails(for movie: Movie) {
         guard navigationController?.topViewController === self else { return }
-        onShowDetails(movie)
+        guard let details = makeDetails(movie) else { return }
+        navigationController?.pushViewController(details, animated: true)
     }
 }
 

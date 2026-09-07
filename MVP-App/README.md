@@ -41,7 +41,10 @@ MVP-App/
 │   │   ├── MoviesViewController.swift
 │   │   ├── MoviesView.swift         what the presenter may ask of the screen
 │   │   ├── MoviesPresenter.swift
-│   │   └── MoviesFeed.swift
+│   │   ├── MoviesFeed.swift
+│   │   ├── MoviesFilterViewController.swift
+│   │   ├── MoviesFilterView.swift   plus FilterRow, a title and a tick
+│   │   └── MoviesFilterPresenter.swift
 │   ├── Info.plist
 │   └── Assets.xcassets
 └── MVP-AppTests/
@@ -73,21 +76,25 @@ Three points are worth knowing before reading the code:
   once and debounces the query, so there is no window where the controls are live over
   a search about to start. MVC reads the search bar's text directly to get the same
   result.
-- **Routing is a closure, not a protocol method the view implements alone.** The
-  presenter decides when (`showFilter`, `showDetails`); the controller decides how, and
-  `SceneDelegate` supplies the destination. No router — that is the seam VIPER and TCA
-  will differ on.
+- **Routing splits three ways.** The presenter decides *when* (`showFilter`,
+  `showDetails`), `SceneDelegate` builds *what* through a factory closure, and the
+  controller decides *how* it appears — `present` for the sheet, `push` for details. No
+  router: that is the seam VIPER and TCA will differ on.
+- **The filter sheet sends whole sections, not row deltas.** MVC reloads the two rows
+  whose tick moved; here the presenter re-sends the rows and the controller reloads the
+  section. At twenty rows with `.none` animation the difference is invisible, and the
+  presenter would otherwise have to track which row changed.
 
 ## Status
 
 The movies list is done: poster grid, pagination, loading / empty / failure states,
 pull-to-refresh, search with debounce, Popular/Trending, and bookmarking with an
-optimistic mark that rolls back on a failed write.
+optimistic mark that rolls back on a failed write. The genre and sort sheet is in,
+owning the genre catalogue so nobody pays for that request unless it is opened.
 
-The filter and details screens are next, so the routing closures in `SceneDelegate`
-are still empty: tapping a film or the filter button does nothing yet.
+The details screen is next, so `SceneDelegate`'s `makeDetails` still returns `nil` and
+tapping a film does nothing.
 
-`MoviesPresenterTests` covers what `MoviesViewControllerTests` covers in
-[MVC-App](../MVC-App/README.md) and stands up no `UIView` to do it.
-`MoviesViewControllerTests` is the thin half: that the controller honours the protocol
-against a real collection view.
+Each screen is tested twice over: a presenter suite that covers what
+[MVC-App](../MVC-App/README.md)'s controller suites cover while standing up no `UIView`,
+and a thin controller suite that the view honours its protocol against real UIKit.

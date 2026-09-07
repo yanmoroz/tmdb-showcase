@@ -54,12 +54,22 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             imageURLBuilder: TMDBImageURLBuilder(configuration: configuration)
         )
 
-        // The filter and details screens arrive in the next steps; until then the
-        // presenter's routing calls have nowhere to go.
+        let fetchGenres = FetchGenres(repository: genres)
+
+        // The details screen arrives in the next step.
         let moviesViewController = MoviesViewController(
             presenter: presenter,
-            onShowFilter: { _, _ in },
-            onShowDetails: { _ in }
+            makeFilter: { selection, onApply in
+                let filterPresenter = MoviesFilterPresenter(
+                    fetchGenres: fetchGenres,
+                    selection: selection,
+                    onApply: onApply
+                )
+                let filterViewController = MoviesFilterViewController(presenter: filterPresenter)
+                filterPresenter.view = filterViewController
+                return filterViewController
+            },
+            makeDetails: { _ in nil }
         )
         presenter.view = moviesViewController
 

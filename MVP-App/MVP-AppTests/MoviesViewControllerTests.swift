@@ -191,6 +191,12 @@ final class MoviesViewControllerTests {
         onShowDetails: @escaping (Movie) -> Void = { _ in },
         sourceLocation: SourceLocation = #_sourceLocation
     ) -> MoviesViewController {
+        // The destination itself is irrelevant here; what matters is whether the
+        // controller reached for one.
+        let destination = { (movie: Movie) -> UIViewController? in
+            onShowDetails(movie)
+            return UIViewController()
+        }
         let presenter = MoviesPresenter(
             fetchMovies: FetchMoviesStub(),
             fetchWatchlistIDs: FetchWatchlistIDsStub(),
@@ -201,8 +207,8 @@ final class MoviesViewControllerTests {
         )
         let sut = MoviesViewController(
             presenter: presenter,
-            onShowFilter: { _, _ in },
-            onShowDetails: onShowDetails
+            makeFilter: { _, _ in UIViewController() },
+            makeDetails: destination
         )
         presenter.view = sut
 
