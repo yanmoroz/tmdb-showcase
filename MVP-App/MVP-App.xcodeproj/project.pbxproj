@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		BB0000000000000000000013 /* PresentationKit in Frameworks */ = {isa = PBXBuildFile; productRef = BB0000000000000000000011 /* PresentationKit */; };
-		BB0000000000000000000014 /* PresentationKit in Frameworks */ = {isa = PBXBuildFile; productRef = BB0000000000000000000012 /* PresentationKit */; };
 		A3DD97E9304EDC1500F87C7F /* YouTubeiOSPlayerHelper in Frameworks */ = {isa = PBXBuildFile; productRef = A3DD97E8304EDC1500F87C7F /* YouTubeiOSPlayerHelper */; };
 		A3DD97EC304EDC5D00F87C7F /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = A3DD97EB304EDC5D00F87C7F /* Nuke */; };
 		A3DD97EE304EDC5D00F87C7F /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = A3DD97ED304EDC5D00F87C7F /* NukeUI */; };
@@ -17,6 +15,8 @@
 		AA0000000000000000000007 /* DataKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000000000000000000003 /* DataKit */; };
 		AA0000000000000000000008 /* DomainKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000000000000000000004 /* DomainKit */; };
 		AA0000000000000000000009 /* DomainKitTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000000000000000000005 /* DomainKitTestSupport */; };
+		BB0000000000000000000013 /* PresentationKit in Frameworks */ = {isa = PBXBuildFile; productRef = BB0000000000000000000011 /* PresentationKit */; };
+		BB0000000000000000000014 /* PresentationKit in Frameworks */ = {isa = PBXBuildFile; productRef = BB0000000000000000000012 /* PresentationKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -532,14 +532,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		BB0000000000000000000011 /* PresentationKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = PresentationKit;
-		};
-		BB0000000000000000000012 /* PresentationKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = PresentationKit;
-		};
 		A3DD97E8304EDC1500F87C7F /* YouTubeiOSPlayerHelper */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A3DD97E7304EDC1500F87C7F /* XCRemoteSwiftPackageReference "youtube-ios-player-helper" */;
@@ -570,6 +562,14 @@
 		AA0000000000000000000005 /* DomainKitTestSupport */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = DomainKitTestSupport;
+		};
+		BB0000000000000000000011 /* PresentationKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PresentationKit;
+		};
+		BB0000000000000000000012 /* PresentationKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PresentationKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

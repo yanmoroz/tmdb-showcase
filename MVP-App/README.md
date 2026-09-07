@@ -35,8 +35,13 @@ MVP-App/
 ├── MVP-App.xcodeproj
 ├── MVP-App/
 │   ├── AppDelegate.swift
-│   ├── SceneDelegate.swift          window
+│   ├── SceneDelegate.swift          window and composition
 │   ├── AppConfig.swift              reads the TMDB token from Info.plist
+│   ├── Movies/
+│   │   ├── MoviesViewController.swift
+│   │   ├── MoviesView.swift         what the presenter may ask of the screen
+│   │   ├── MoviesPresenter.swift
+│   │   └── MoviesFeed.swift
 │   ├── Info.plist
 │   └── Assets.xcassets
 └── MVP-AppTests/
@@ -48,6 +53,41 @@ MVP-App/
 2. Open `TMDB-Showcase.xcworkspace`
 3. Scheme `MVP-App`, an iOS 17+ simulator
 
+## The presenter contract
+
+`MoviesView` is a protocol of commands the controller obeys — `show(_:)`,
+`showLoading()`, `showFailure(_:retry:)`, `showToast(_:)` — not a single
+`render(state:)`, which is the shape the MVVM app will take. The presenter owns the
+feed, the paging cursor, both inputs and the in-flight `Task`; the controller owns
+the collection view and holds none of them.
+
+Three points are worth knowing before reading the code:
+
+- **`lastVisibleItem() -> Int?` is the one question among the commands.** After a page
+  lands the presenter has to know whether the reader is already at the bottom:
+  `willDisplay` fired for those cells while the request was in flight and found a load
+  in progress, so without asking, the list stalls with nothing left to trigger the
+  next page. That is where a passive view leaks.
+- **Search availability is read from the keystroke, not the debounced value.** The
+  controller reports every keystroke and the presenter both updates availability at
+  once and debounces the query, so there is no window where the controls are live over
+  a search about to start. MVC reads the search bar's text directly to get the same
+  result.
+- **Routing is a closure, not a protocol method the view implements alone.** The
+  presenter decides when (`showFilter`, `showDetails`); the controller decides how, and
+  `SceneDelegate` supplies the destination. No router — that is the seam VIPER and TCA
+  will differ on.
+
 ## Status
 
-Scaffolding only: build settings, the token path and the package links match [MVC-App](../MVC-App/README.md). No screens yet — `SceneDelegate` installs a bare `UIViewController`.
+The movies list is done: poster grid, pagination, loading / empty / failure states,
+pull-to-refresh, search with debounce, Popular/Trending, and bookmarking with an
+optimistic mark that rolls back on a failed write.
+
+The filter and details screens are next, so the routing closures in `SceneDelegate`
+are still empty: tapping a film or the filter button does nothing yet.
+
+`MoviesPresenterTests` covers what `MoviesViewControllerTests` covers in
+[MVC-App](../MVC-App/README.md) and stands up no `UIView` to do it.
+`MoviesViewControllerTests` is the thin half: that the controller honours the protocol
+against a real collection view.
