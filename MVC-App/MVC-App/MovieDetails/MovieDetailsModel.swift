@@ -1,5 +1,6 @@
 import Foundation
 import DomainKit
+import PresentationKit
 
 extension MovieDetailsViewController {
     /// Everything the screen draws, flat and already formatted.

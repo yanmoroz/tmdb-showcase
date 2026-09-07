@@ -23,8 +23,8 @@ The demo app on UIKit + MVP. Domain and data come from [SharedKit](../SharedKit/
 
 | target | products |
 | --- | --- |
-| `MVP-App` | `DomainKit`, `DataKit`, `Nuke`, `NukeUI`, `YouTubeiOSPlayerHelper` |
-| `MVP-AppTests` | `DomainKit`, `DomainKitTestSupport` |
+| `MVP-App` | `DomainKit`, `DataKit`, `PresentationKit`, `Nuke`, `NukeUI`, `YouTubeiOSPlayerHelper` |
+| `MVP-AppTests` | `DomainKit`, `DomainKitTestSupport`, `PresentationKit` |
 
 `SharedKit` is attached as a local package of the workspace, so opening `MVP-App.xcodeproj` on its own will not resolve `DomainKit` and `DataKit`.
 

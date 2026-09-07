@@ -1,8 +1,7 @@
 import Testing
 import Foundation
-@testable import MVC_App
+@testable import PresentationKit
 
-@MainActor
 @Suite("MovieFormatting")
 struct MovieFormattingTests {
     @Test("A release date becomes its year")

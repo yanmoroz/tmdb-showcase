@@ -37,27 +37,18 @@ MVC-App/
 │   ├── Movies/
 │   │   ├── MoviesViewController.swift
 │   │   ├── MoviesFeed.swift
-│   │   ├── MoviesFilterViewController.swift
-│   │   └── MoviesFilter.swift
+│   │   └── MoviesFilterViewController.swift
 │   ├── MovieDetails/                the screen both tabs push
 │   │   ├── MovieDetailsViewController.swift
 │   │   └── MovieDetailsModel.swift
 │   ├── Watchlist/
 │   │   └── WatchlistViewController.swift
-│   ├── Common/
-│   │   ├── MovieCell.swift
-│   │   ├── MovieGrid.swift
-│   │   ├── Debouncer.swift
-│   │   ├── MovieFormatting.swift
-│   │   ├── ToastView.swift
-│   │   ├── MovieSortOption+Title.swift
-│   │   └── AppError+Message.swift
 │   ├── Info.plist
 │   └── Assets.xcassets
 └── MVC-AppTests/
 ```
 
-`Common/` is the seed of a shared UI package: its components take flat values and know nothing about the controller. Extraction is planned for the MVP stage, once it is clear what actually repeats. `MovieCell` and `MovieGrid` moved here when the Watchlist gained the same grid — two callers is what makes a thing shared.
+The views, the formatting and `MoviesFilter` live in [PresentationKit](../PresentationKit), shared with the other UIKit apps: a poster cell and a date-to-year rule are not architectural choices, and rewriting them per app would make the comparison noisier, not sharper.
 
 The Watchlist is the same grid and the same cell, so on that screen every bookmark is filled and tapping one un-saves. The row does not disappear when it does: the mark empties and the film goes on the next appearance, which undoes a mis-tap in place and avoids reconciling a delete against a grid being scrolled. Both list screens re-read on `viewWillAppear` because nothing here observes anything — replacing that is one of the seams the other five architectures will show.
 

@@ -24,6 +24,10 @@ playground.xcworkspace
 # Package.pins
 # Package.resolved
 # *.xcodeproj
+
+# The workspace pins versions for every app; a package's own resolved file
+# is a byproduct of building it standalone and would only drift.
+PresentationKit/Package.resolved
 #
 # Xcode automatically generates this directory with a .xcworkspacedata file and xcuserdata
 # hence it is not needed unless you have added a package configuration file to your project

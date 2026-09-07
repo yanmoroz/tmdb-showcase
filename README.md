@@ -58,6 +58,8 @@ TMDB-Showcase.xcworkspace
 │       ├── DomainKit/              entities, use case and repository protocols, AppError
 │       ├── DataKit/                DTOs, TMDB client, repository implementations, error mapping, SwiftData cache
 │       └── DomainKitTestSupport/   domain fixtures and stubs for the -App test targets
+├── PresentationKit/                (local Swift package, iOS only)
+│   └── Sources/                    the cell, the grid, the toast and the formatting the UIKit apps share
 ├── MVC-App/
 ├── MVP-App/
 ├── MVVM-App/
@@ -66,7 +68,7 @@ TMDB-Showcase.xcworkspace
 └── TCA-App/
 ```
 
-The domain and data layers are shared by all six modules. The presentation layer — presenter, view model, interactor, reducer or store — is unique to each architecture and lives in its own `-App` project.
+The domain and data layers are shared by all six modules, and the five UIKit ones also share their views through `PresentationKit` — a poster cell is not an architectural choice. The presentation layer — presenter, view model, interactor, reducer or store — is unique to each architecture and lives in its own `-App` project.
 
 The boundaries between layers, binding on all six implementations, are written down in [SharedKit/README.md](SharedKit/README.md). Notes specific to one module live in its own README, for instance [MVC-App/README.md](MVC-App/README.md).
 
@@ -86,7 +88,7 @@ string catalogues for no gain on the thing this repository is actually comparing
 - Swift 6 language mode, iOS 17+ (the floor for SwiftData)
 - SPM
 - TMDB REST API
-- [Nuke](https://github.com/kean/Nuke) for loading and caching posters. The only third-party dependency: the domain and data layers import nothing but `Foundation`
+- [Nuke](https://github.com/kean/Nuke) for loading and caching posters, reaching the apps through `PresentationKit`. The only third-party dependency: the domain and data layers import nothing but `Foundation`
 - CI: GitLab CI / Fastlane (planned)
 
 ## Current status

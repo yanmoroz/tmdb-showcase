@@ -5,8 +5,11 @@ import UIKit
 /// Here rather than on either controller because both want it identically —
 /// the Movies feed and the Watchlist show the same cell at the same size, and a
 /// copy would drift the moment one of them was tuned.
-enum MovieGrid {
-    static func makeCollectionView() -> UICollectionView {
+// UIKit is main-actor isolated and this package has no default-isolation
+// setting, so what MVC-App got implicitly is written out here.
+@MainActor
+public enum MovieGrid {
+    public static func makeCollectionView() -> UICollectionView {
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: makeLayout())
         collectionView.backgroundColor = .systemBackground
         collectionView.alwaysBounceVertical = true

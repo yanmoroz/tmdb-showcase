@@ -3,6 +3,7 @@ import UIKit
 import DomainKit
 import DomainKitTestSupport
 @testable import MVC_App
+import PresentationKit
 
 @MainActor
 @Suite("MoviesFilterViewController")

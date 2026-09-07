@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BB0000000000000000000003 /* PresentationKit in Frameworks */ = {isa = PBXBuildFile; productRef = BB0000000000000000000001 /* PresentationKit */; };
+		BB0000000000000000000004 /* PresentationKit in Frameworks */ = {isa = PBXBuildFile; productRef = BB0000000000000000000002 /* PresentationKit */; };
 		A35D39653047697200068590 /* DomainKit in Frameworks */ = {isa = PBXBuildFile; productRef = A35D39643047697200068590 /* DomainKit */; };
 		A35D39673047697200068590 /* DomainKitTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = A35D39663047697200068590 /* DomainKitTestSupport */; };
 		A35D396A30476AFE00068590 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = A35D396930476AFE00068590 /* Nuke */; };
@@ -64,6 +66,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB0000000000000000000004 /* PresentationKit in Frameworks */,
 				A35D39653047697200068590 /* DomainKit in Frameworks */,
 				A35D39673047697200068590 /* DomainKitTestSupport in Frameworks */,
 			);
@@ -73,6 +76,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB0000000000000000000003 /* PresentationKit in Frameworks */,
 				A35D396A30476AFE00068590 /* Nuke in Frameworks */,
 				A3E3431C3044544A00006035 /* DataKit in Frameworks */,
 				A3E3431E3044544A00006035 /* DomainKit in Frameworks */,
@@ -133,6 +137,7 @@
 			);
 			name = "MVC-AppTests";
 			packageProductDependencies = (
+				BB0000000000000000000002 /* PresentationKit */,
 				A35D39643047697200068590 /* DomainKit */,
 				A35D39663047697200068590 /* DomainKitTestSupport */,
 			);
@@ -157,6 +162,7 @@
 			);
 			name = "MVC-App";
 			packageProductDependencies = (
+				BB0000000000000000000001 /* PresentationKit */,
 				A3E3431B3044544A00006035 /* DataKit */,
 				A3E3431D3044544A00006035 /* DomainKit */,
 				A35D396930476AFE00068590 /* Nuke */,
@@ -532,6 +538,14 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		BB0000000000000000000001 /* PresentationKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PresentationKit;
+		};
+		BB0000000000000000000002 /* PresentationKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PresentationKit;
+		};
 		A35D39643047697200068590 /* DomainKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = DomainKit;

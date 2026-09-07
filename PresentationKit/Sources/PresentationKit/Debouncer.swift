@@ -6,11 +6,11 @@ import Foundation
 /// work, or one firing for input the user has already replaced, stop being
 /// possible rather than something every call site has to prevent.
 @MainActor
-final class Debouncer {
+public final class Debouncer {
     private let interval: Duration
     private var pending: Task<Void, Never>?
 
-    init(interval: Duration) {
+    public init(interval: Duration) {
         self.interval = interval
     }
 
@@ -18,7 +18,7 @@ final class Debouncer {
         pending?.cancel()
     }
 
-    func schedule(_ work: @escaping @MainActor () -> Void) {
+    public func schedule(_ work: @escaping @MainActor () -> Void) {
         pending?.cancel()
         pending = Task { [interval] in
             try? await Task.sleep(for: interval)
@@ -27,7 +27,7 @@ final class Debouncer {
         }
     }
 
-    func cancel() {
+    public func cancel() {
         pending?.cancel()
         pending = nil
     }

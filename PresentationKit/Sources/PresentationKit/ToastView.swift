@@ -4,7 +4,7 @@ import UIKit
 ///
 /// Used for errors that must not replace already-loaded content — the geo-block
 /// notice, for one: the list stays usable while the toast explains the VPN.
-final class ToastView: UIView {
+public final class ToastView: UIView {
     private static let visibleDuration: TimeInterval = 4
 
     private let label = UILabel()
@@ -17,14 +17,14 @@ final class ToastView: UIView {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) is unavailable — MVC-App builds its UI in code")
+        fatalError("init(coder:) is unavailable — these views are built in code")
     }
 
     deinit {
         dismissTask?.cancel()
     }
 
-    static func show(_ message: String, in container: UIView) {
+    public static func show(_ message: String, in container: UIView) {
         container.subviews.compactMap { $0 as? ToastView }.forEach { $0.dismiss() }
 
         let toast = ToastView(message: message)

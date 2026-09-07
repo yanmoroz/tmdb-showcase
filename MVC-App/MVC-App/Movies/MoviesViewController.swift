@@ -1,5 +1,6 @@
 import UIKit
 import DomainKit
+import PresentationKit
 
 final class MoviesViewController: UIViewController {
     private let fetchMovies: any FetchMoviesUseCase

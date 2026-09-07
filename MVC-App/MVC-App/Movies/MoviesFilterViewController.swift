@@ -1,5 +1,6 @@
 import UIKit
 import DomainKit
+import PresentationKit
 
 /// Owns the genre catalogue itself: the movies screen knows only the chosen
 /// `Genre.ID`, so nobody pays for this request unless the filter is opened.

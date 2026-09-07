@@ -5,15 +5,15 @@ import DomainKit
 /// Kept apart from `MoviesQuery` so a filter survives a search: the domain
 /// forbids combining the two, but the choice itself should not be forgotten
 /// just because someone typed in the search field.
-struct MoviesFilter: Equatable {
+public struct MoviesFilter: Equatable {
     /// Which feed is being browsed. A value here rather than a separate input on
     /// the controller: the screen derives its query from the search text and this
     /// one filter, and a third input would need precedence rules between them.
-    enum Source: Equatable, CaseIterable {
+    public enum Source: Equatable, CaseIterable {
         case catalogue
         case trending
 
-        var title: String {
+        public var title: String {
             switch self {
             case .catalogue: "Popular"
             case .trending: "Trending"
@@ -21,13 +21,23 @@ struct MoviesFilter: Equatable {
         }
     }
 
-    var source: Source = .catalogue
-    var genreID: Genre.ID?
-    var sort: MovieSortOption = .popularityDescending
+    public var source: Source
+    public var genreID: Genre.ID?
+    public var sort: MovieSortOption
+
+    public init(
+        source: Source = .catalogue,
+        genreID: Genre.ID? = nil,
+        sort: MovieSortOption = .popularityDescending
+    ) {
+        self.source = source
+        self.genreID = genreID
+        self.sort = sort
+    }
 
     /// Genre and sort only mean something to `/discover`; `/trending` takes
     /// neither, which is why the sheet that sets them is unreachable under it.
-    var allowsRefinement: Bool {
+    public var allowsRefinement: Bool {
         source == .catalogue
     }
 
@@ -35,7 +45,7 @@ struct MoviesFilter: Equatable {
         genreID != nil || sort != .popularityDescending
     }
 
-    var query: MoviesQuery {
+    public var query: MoviesQuery {
         switch source {
         // The week window rather than the day: a feed that turns over daily is
         // noisier than it is useful here, and `.day` stays domain surface.

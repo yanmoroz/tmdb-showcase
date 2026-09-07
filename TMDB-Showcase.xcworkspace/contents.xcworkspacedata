@@ -13,4 +13,7 @@
    <FileRef
       location = "group:SharedKit">
    </FileRef>
+   <FileRef
+      location = "group:PresentationKit">
+   </FileRef>
 </Workspace>

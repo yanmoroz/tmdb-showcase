@@ -3,6 +3,7 @@ import UIKit
 import DomainKit
 import DomainKitTestSupport
 @testable import MVC_App
+import PresentationKit
 
 /// The projection is pure, so the rules about which fields count as absent are
 /// tested here without standing a view up.

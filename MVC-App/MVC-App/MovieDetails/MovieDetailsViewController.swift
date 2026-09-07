@@ -2,6 +2,7 @@ import UIKit
 import NukeUI
 import YouTubeiOSPlayerHelper
 import DomainKit
+import PresentationKit
 
 /// Seeded with the `Movie` the list already holds, so the screen is never blank:
 /// title, artwork, year, rating and overview are on screen before `/movie/{id}`

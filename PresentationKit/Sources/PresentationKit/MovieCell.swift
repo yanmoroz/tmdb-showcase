@@ -1,20 +1,34 @@
 import UIKit
 import NukeUI
 
-final class MovieCell: UICollectionViewCell {
-    static let reuseIdentifier = "MovieCell"
+public final class MovieCell: UICollectionViewCell {
+    public static let reuseIdentifier = "MovieCell"
 
-    struct Model {
-        let posterURL: URL?
-        let title: String
-        let year: String?
-        let rating: String?
-        let isSaved: Bool
+    public struct Model {
+        public let posterURL: URL?
+        public let title: String
+        public let year: String?
+        public let rating: String?
+        public let isSaved: Bool
+
+        public init(
+            posterURL: URL?,
+            title: String,
+            year: String?,
+            rating: String?,
+            isSaved: Bool
+        ) {
+            self.posterURL = posterURL
+            self.title = title
+            self.year = year
+            self.rating = rating
+            self.isSaved = isSaved
+        }
     }
 
     /// Cleared on reuse: a stale closure would toggle whichever film the cell
     /// used to hold.
-    var onToggleWatchlist: (() -> Void)?
+    public var onToggleWatchlist: (() -> Void)?
 
     private let posterContainer = UIView()
     private let posterView = LazyImageView()
@@ -22,17 +36,17 @@ final class MovieCell: UICollectionViewCell {
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
 
-    override init(frame: CGRect) {
+    public override init(frame: CGRect) {
         super.init(frame: frame)
         setUp()
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) is unavailable — MVC-App builds its UI in code")
+        fatalError("init(coder:) is unavailable — these views are built in code")
     }
 
-    override func prepareForReuse() {
+    public override func prepareForReuse() {
         super.prepareForReuse()
         posterView.url = nil
         titleLabel.text = nil
@@ -40,7 +54,7 @@ final class MovieCell: UICollectionViewCell {
         onToggleWatchlist = nil
     }
 
-    func configure(with model: Model) {
+    public func configure(with model: Model) {
         posterView.url = model.posterURL
         titleLabel.text = model.title
         subtitleLabel.text = [model.year, model.rating].compactMap { $0 }.joined(separator: " · ")

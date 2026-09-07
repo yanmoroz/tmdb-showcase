@@ -1,7 +1,7 @@
 import DomainKit
 
 extension AppError {
-    var message: String {
+    public var message: String {
         switch self {
         case .regionRestricted:
             "TMDB is not available in your region. Turn on a VPN and try again."
