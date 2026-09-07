@@ -5,6 +5,9 @@
       location = "group:README.md">
    </FileRef>
    <FileRef
+      location = "group:MVP-App/MVP-App.xcodeproj">
+   </FileRef>
+   <FileRef
       location = "group:MVC-App/MVC-App.xcodeproj">
    </FileRef>
    <FileRef

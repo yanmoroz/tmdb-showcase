@@ -1,2 +1,2 @@
-// Скопируйте этот файл в Config.xcconfig и подставьте свой ключ с themoviedb.org (Settings → API → API Read Access Token)
+// Copy this file to Config.xcconfig and paste your key from themoviedb.org (Settings → API → API Read Access Token)
 TMDB_ACCESS_TOKEN = YOUR_V4_READ_ACCESS_TOKEN_HERE
