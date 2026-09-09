@@ -6,8 +6,8 @@ One application implemented six times, each on a different UI architecture.
 
 | #   | Architecture                      | Status         |
 | --- | --------------------------------- | -------------- |
-| 1   | MVC                               | 🚧 in progress |
-| 2   | MVP                               | ⏳ not started  |
+| 1   | MVC                               | ✅ done         |
+| 2   | MVP                               | ✅ done         |
 | 3   | MVVM                              | ⏳ not started  |
 | 4   | VIPER                             | ⏳ not started  |
 | 5   | VIP (Clean Swift)                 | ⏳ not started  |
@@ -46,7 +46,7 @@ A movie catalogue built on the [TMDB API](https://developer.themoviedb.org/docs/
 TMDB is geo-blocked at the CDN level for RU/BY.
 
 - HTTP failures are classified into the single domain error `AppError` — a 401 carries a structured TMDB body, the CDN block answers 403 with none
-- `.regionRestricted` is surfaced to the user as a toast
+- `.regionRestricted` reaches the reader as the screen's failure state, with no Retry: without a VPN a retry returns the same 403. It becomes a toast only when there is already loaded content a failure must not replace
 - Users in the affected regions need a VPN
 
 ## Repository layout
@@ -62,10 +62,10 @@ TMDB-Showcase.xcworkspace
 │   └── Sources/                    the cell, the grid, the toast and the formatting the UIKit apps share
 ├── MVC-App/
 ├── MVP-App/
-├── MVVM-App/
-├── VIPER-App/
-├── VIP-App/
-└── TCA-App/
+├── MVVM-App/                       ┐
+├── VIPER-App/                      ├ planned, not in the repository yet
+├── VIP-App/                        │
+└── TCA-App/                        ┘
 ```
 
 The domain and data layers are shared by all six modules, and the five UIKit ones also share their views through `PresentationKit` — a poster cell is not an architectural choice. The presentation layer — presenter, view model, interactor, reducer or store — is unique to each architecture and lives in its own `-App` project.
@@ -88,14 +88,23 @@ string catalogues for no gain on the thing this repository is actually comparing
 - Swift 6 language mode, iOS 17+ (the floor for SwiftData)
 - SPM
 - TMDB REST API
-- [Nuke](https://github.com/kean/Nuke) for loading and caching posters, reaching the apps through `PresentationKit`. The only third-party dependency: the domain and data layers import nothing but `Foundation`
+- [Nuke](https://github.com/kean/Nuke) for loading and caching posters — through `PresentationKit`'s cell on the grids, and directly in each details screen
+- [youtube-ios-player-helper](https://github.com/youtube/youtube-ios-player-helper) for the trailer on the details screen — TMDB returns a YouTube id, not a playable URL
+- Those two are the only third-party dependencies, and both stop at presentation: the domain and data layers import nothing but `Foundation`
 - CI: GitLab CI / Fastlane (planned)
 
 ## Current status
 
-`DomainKit` and `DataKit` are done for the Movies feature: entities, `AppError`, the protocols and their TMDB implementations, error classification, the image URL builder, plus fixtures and stubs for tests.
+`DomainKit` and `DataKit` are done for both features: entities, `AppError`, the protocols and their TMDB implementations, error classification, the image URL builder, a SwiftData cache for pages and details, a second store for the watchlist, plus fixtures and stubs for tests.
 
-`MVC-App` has a working Movies screen: a poster grid with pagination, error handling and pull-to-refresh, popular and trending feeds, search with debounce, a modal screen for the genre filter and sort order, and a details screen with its trailer. It reads through a SwiftData cache, so a warm launch shows films before the network answers and keeps working without one. The Watchlist tab is in too, on its own store. Next: the remaining five architectures.
+`MVC-App` has all four screens: a poster grid with pagination, error handling and pull-to-refresh, popular and trending feeds, search with debounce, a modal screen for the genre filter and sort order, and a details screen with its trailer. It reads through a SwiftData cache, so a warm launch shows films before the network answers and keeps working without one. The Watchlist tab is in too, on its own store.
+
+`MVP-App` now does the same four screens over the same `SharedKit`, so the two can be
+compared directly. Each screen is a presenter owning the state and a passive view
+obeying a protocol of commands, and the views themselves are shared through
+`PresentationKit` — a poster cell is not an architectural choice. What that buys shows
+up in the tests: MVP's presenter suites cover what MVC's controller suites cover while
+standing up no `UIView` at all. Next: the remaining four architectures.
 
 ## Setting up
 

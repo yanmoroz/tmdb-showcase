@@ -14,6 +14,22 @@ import UIKit
 /// between them. That last one fails silently if forgotten: `view` is weak, so a
 /// missed assignment leaves it nil and the screen simply never renders.
 enum CompositionRoot {
+    static func makeTabBar(
+        movies: any MoviesRepository,
+        genres: any GenresRepository,
+        watchlist: any WatchlistRepository,
+        imageURLBuilder: any MovieImageURLBuilder
+    ) -> UITabBarController {
+        let tabBar = UITabBarController()
+        tabBar.viewControllers = [
+            makeMovies(movies: movies, genres: genres, watchlist: watchlist, imageURLBuilder: imageURLBuilder),
+            makeWatchlist(movies: movies, watchlist: watchlist, imageURLBuilder: imageURLBuilder),
+        ]
+        return tabBar
+    }
+
+    /// Each tab owns its navigation controller: `showDetails(for:)` guards on
+    /// being the top view controller, which only holds per stack.
     static func makeMovies(
         movies: any MoviesRepository,
         genres: any GenresRepository,
@@ -46,6 +62,35 @@ enum CompositionRoot {
             }
         )
         presenter.view = view
+        view.tabBarItem = UITabBarItem(title: "Movies", image: UIImage(systemName: "film"), tag: 0)
+
+        return UINavigationController(rootViewController: view)
+    }
+
+    static func makeWatchlist(
+        movies: any MoviesRepository,
+        watchlist: any WatchlistRepository,
+        imageURLBuilder: any MovieImageURLBuilder
+    ) -> UINavigationController {
+        let presenter = WatchlistPresenter(
+            fetchWatchlist: FetchWatchlist(repository: watchlist),
+            addToWatchlist: AddToWatchlist(repository: watchlist),
+            removeFromWatchlist: RemoveFromWatchlist(repository: watchlist),
+            imageURLBuilder: imageURLBuilder
+        )
+        let view = WatchlistViewController(
+            presenter: presenter,
+            makeDetails: { movie in
+                makeMovieDetails(
+                    movie: movie,
+                    movies: movies,
+                    watchlist: watchlist,
+                    imageURLBuilder: imageURLBuilder
+                )
+            }
+        )
+        presenter.view = view
+        view.tabBarItem = UITabBarItem(title: "Watchlist", image: UIImage(systemName: "bookmark"), tag: 1)
 
         return UINavigationController(rootViewController: view)
     }

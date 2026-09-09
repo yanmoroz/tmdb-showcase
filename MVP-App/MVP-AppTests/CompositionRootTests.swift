@@ -62,6 +62,38 @@ struct CompositionRootTests {
         #expect(details?.testTitleText == "Dune")
     }
 
+    @Test("The watchlist screen is wired both ways")
+    func watchlistIsWiredBothWays() throws {
+        let navigation = CompositionRoot.makeWatchlist(
+            movies: MoviesRepositoryStub(),
+            watchlist: UnavailableWatchlistRepository(),
+            imageURLBuilder: MovieImageURLBuilderStub()
+        )
+        let view = try #require(navigation.viewControllers.first as? WatchlistViewController)
+
+        view.loadViewIfNeeded()
+        view.beginAppearanceTransition(true, animated: false)
+        #expect(view.testHasRendered)
+    }
+
+    @Test("Both tabs get their own navigation stack")
+    func tabsGetTheirOwnStacks() {
+        let tabBar = makeTabBar()
+
+        #expect(tabBar.viewControllers?.count == 2)
+        #expect(tabBar.viewControllers?.allSatisfy { $0 is UINavigationController } == true)
+    }
+
+    @Test("The tabs are Movies and Watchlist, in that order")
+    func tabsAreInOrder() {
+        let tabBar = makeTabBar()
+        let roots = tabBar.viewControllers?.compactMap { ($0 as? UINavigationController)?.viewControllers.first }
+
+        #expect(roots?.first is MoviesViewController)
+        #expect(roots?.last is WatchlistViewController)
+        #expect(tabBar.viewControllers?.map(\.tabBarItem.title) == ["Movies", "Watchlist"])
+    }
+
     @Test("An unavailable watchlist still builds the app")
     func buildsWithoutAWatchlist() {
         let navigation = CompositionRoot.makeMovies(
@@ -75,6 +107,15 @@ struct CompositionRootTests {
     }
 
     // MARK: - Helpers
+
+    private func makeTabBar() -> UITabBarController {
+        CompositionRoot.makeTabBar(
+            movies: MoviesRepositoryStub(),
+            genres: GenresRepositoryStub(),
+            watchlist: UnavailableWatchlistRepository(),
+            imageURLBuilder: MovieImageURLBuilderStub()
+        )
+    }
 
     private func makeMovies() -> UINavigationController {
         CompositionRoot.makeMovies(
@@ -91,6 +132,18 @@ struct CompositionRootTests {
 @MainActor
 private extension MoviesViewController {
     /// The presenter renders on `viewDidLoad`; an empty grid with no overlay
+    /// would mean it never got the chance.
+    var testHasRendered: Bool {
+        autoreleasepool {
+            view.layoutIfNeeded()
+            return contentUnavailableConfiguration != nil
+        }
+    }
+}
+
+@MainActor
+private extension WatchlistViewController {
+    /// The presenter renders on `viewWillAppear`; an empty grid with no overlay
     /// would mean it never got the chance.
     var testHasRendered: Bool {
         autoreleasepool {

@@ -51,6 +51,10 @@ MVP-App/
 │   │   ├── MovieDetailsView.swift
 │   │   ├── MovieDetailsPresenter.swift
 │   │   └── MovieDetailsModel.swift  the projection, seed plus what loaded
+│   ├── Watchlist/
+│   │   ├── WatchlistViewController.swift
+│   │   ├── WatchlistView.swift
+│   │   └── WatchlistPresenter.swift
 │   ├── Info.plist
 │   └── Assets.xcassets
 └── MVP-AppTests/
@@ -112,7 +116,13 @@ is never blank, with the loaded fields, the trailer and a bookmark arriving afte
 failure sits beside the card rather than over it — the view has no command that could
 blank it.
 
-The Watchlist tab is next; until then the app is a single navigation stack.
+The Watchlist tab is in, on the same grid and cell as the movies list. Everything
+listed there is saved, so every bookmark is filled and tapping one un-saves — and the
+row stays put until the next appearance, which undoes a mis-tap in place and avoids
+reconciling a delete against a grid being scrolled. Both list screens re-read on
+`viewWillAppear`, because nothing here observes anything.
+
+All four screens are done. Next: the remaining four architectures.
 
 Each screen is tested twice over: a presenter suite that covers what
 [MVC-App](../MVC-App/README.md)'s controller suites cover while standing up no `UIView`,
