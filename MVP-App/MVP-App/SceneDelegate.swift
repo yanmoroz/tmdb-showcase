@@ -25,6 +25,8 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }
 
+    /// Opening the stores is this type's job; assembling screens is
+    /// ``CompositionRoot``'s.
     private func makeRoot() -> UIViewController {
         let configuration = AppConfig.tmdb
 
@@ -46,33 +48,11 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             genres = CachingGenresRepository(wrapping: genres, cache: cache)
         }
 
-        let presenter = MoviesPresenter(
-            fetchMovies: FetchMovies(repository: movies),
-            fetchWatchlistIDs: FetchWatchlistIDs(repository: watchlist),
-            addToWatchlist: AddToWatchlist(repository: watchlist),
-            removeFromWatchlist: RemoveFromWatchlist(repository: watchlist),
+        return CompositionRoot.makeMovies(
+            movies: movies,
+            genres: genres,
+            watchlist: watchlist,
             imageURLBuilder: TMDBImageURLBuilder(configuration: configuration)
         )
-
-        let fetchGenres = FetchGenres(repository: genres)
-
-        // The details screen arrives in the next step.
-        let moviesViewController = MoviesViewController(
-            presenter: presenter,
-            makeFilter: { selection, onApply in
-                let filterPresenter = MoviesFilterPresenter(
-                    fetchGenres: fetchGenres,
-                    selection: selection,
-                    onApply: onApply
-                )
-                let filterViewController = MoviesFilterViewController(presenter: filterPresenter)
-                filterPresenter.view = filterViewController
-                return filterViewController
-            },
-            makeDetails: { _ in nil }
-        )
-        presenter.view = moviesViewController
-
-        return UINavigationController(rootViewController: moviesViewController)
     }
 }

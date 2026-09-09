@@ -193,7 +193,7 @@ final class MoviesViewControllerTests {
     ) -> MoviesViewController {
         // The destination itself is irrelevant here; what matters is whether the
         // controller reached for one.
-        let destination = { (movie: Movie) -> UIViewController? in
+        let destination = { (movie: Movie) -> UIViewController in
             onShowDetails(movie)
             return UIViewController()
         }

@@ -7,9 +7,9 @@ import PresentationKit
 final class MoviesViewController: UIViewController {
     private let presenter: MoviesPresenter
     /// Composition supplies the destination; this controller supplies the
-    /// presentation. `makeDetails` is optional only until that screen exists.
+    /// presentation.
     private let makeFilter: (MoviesFilter, @escaping (MoviesFilter) -> Void) -> UIViewController
-    private let makeDetails: (Movie) -> UIViewController?
+    private let makeDetails: (Movie) -> UIViewController
 
     private var items: [MovieCell.Model] = []
 
@@ -23,7 +23,7 @@ final class MoviesViewController: UIViewController {
     init(
         presenter: MoviesPresenter,
         makeFilter: @escaping (MoviesFilter, @escaping (MoviesFilter) -> Void) -> UIViewController,
-        makeDetails: @escaping (Movie) -> UIViewController?
+        makeDetails: @escaping (Movie) -> UIViewController
     ) {
         self.presenter = presenter
         self.makeFilter = makeFilter
@@ -234,8 +234,7 @@ extension MoviesViewController: MoviesView {
 
     func showDetails(for movie: Movie) {
         guard navigationController?.topViewController === self else { return }
-        guard let details = makeDetails(movie) else { return }
-        navigationController?.pushViewController(details, animated: true)
+        navigationController?.pushViewController(makeDetails(movie), animated: true)
     }
 }
 

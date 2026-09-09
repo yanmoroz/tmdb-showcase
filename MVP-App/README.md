@@ -35,7 +35,8 @@ MVP-App/
 ├── MVP-App.xcodeproj
 ├── MVP-App/
 │   ├── AppDelegate.swift
-│   ├── SceneDelegate.swift          window and composition
+│   ├── SceneDelegate.swift          window; opens the stores
+│   ├── CompositionRoot.swift        assembles each screen
 │   ├── AppConfig.swift              reads the TMDB token from Info.plist
 │   ├── Movies/
 │   │   ├── MoviesViewController.swift
@@ -45,6 +46,11 @@ MVP-App/
 │   │   ├── MoviesFilterViewController.swift
 │   │   ├── MoviesFilterView.swift   plus FilterRow, a title and a tick
 │   │   └── MoviesFilterPresenter.swift
+│   ├── MovieDetails/
+│   │   ├── MovieDetailsViewController.swift
+│   │   ├── MovieDetailsView.swift
+│   │   ├── MovieDetailsPresenter.swift
+│   │   └── MovieDetailsModel.swift  the projection, seed plus what loaded
 │   ├── Info.plist
 │   └── Assets.xcassets
 └── MVP-AppTests/
@@ -77,9 +83,18 @@ Three points are worth knowing before reading the code:
   a search about to start. MVC reads the search bar's text directly to get the same
   result.
 - **Routing splits three ways.** The presenter decides *when* (`showFilter`,
-  `showDetails`), `SceneDelegate` builds *what* through a factory closure, and the
+  `showDetails`), `CompositionRoot` builds *what* through a factory closure, and the
   controller decides *how* it appears — `present` for the sheet, `push` for details. No
   router: that is the seam VIPER and TCA will differ on.
+- **Assembly is three steps per screen**, and the third — `presenter.view = view` —
+  fails silently, since `view` is `weak` and a missed assignment leaves a screen that
+  builds, launches and never draws. `CompositionRoot` keeps that ritual in one method
+  per screen and `CompositionRootTests` asserts each one happened. MVC-App needs
+  neither.
+- **The presenter joins display strings.** `MovieDetailsModel` carries one
+  `metadata` field — "2026 · 2h 25m · ★ 7.9" — where MVC-App's model keeps year,
+  runtime and rating apart and the controller joins them. Choosing a separator is not
+  the view's decision.
 - **The filter sheet sends whole sections, not row deltas.** MVC reloads the two rows
   whose tick moved; here the presenter re-sends the rows and the controller reloads the
   section. At twenty rows with `.none` animation the difference is invisible, and the
@@ -92,8 +107,12 @@ pull-to-refresh, search with debounce, Popular/Trending, and bookmarking with an
 optimistic mark that rolls back on a failed write. The genre and sort sheet is in,
 owning the genre catalogue so nobody pays for that request unless it is opened.
 
-The details screen is next, so `SceneDelegate`'s `makeDetails` still returns `nil` and
-tapping a film does nothing.
+The details screen is in: seeded from the `Movie` the list already holds, so the card
+is never blank, with the loaded fields, the trailer and a bookmark arriving after. A
+failure sits beside the card rather than over it — the view has no command that could
+blank it.
+
+The Watchlist tab is next; until then the app is a single navigation stack.
 
 Each screen is tested twice over: a presenter suite that covers what
 [MVC-App](../MVC-App/README.md)'s controller suites cover while standing up no `UIView`,
