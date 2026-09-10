@@ -62,9 +62,9 @@ TMDB-Showcase.xcworkspace
 │   └── Sources/                    the cell, the grid, the toast, the formatting and the view state the UIKit apps share
 ├── MVC-App/
 ├── MVP-App/
+├── VIPER-App/
 ├── MVVM-App/                       ┐
-├── VIPER-App/                      ├ planned, not in the repository yet
-├── VIP-App/                        │
+├── VIP-App/                        ├ planned, not in the repository yet
 └── TCA-App/                        ┘
 ```
 
