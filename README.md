@@ -59,7 +59,7 @@ TMDB-Showcase.xcworkspace
 │       ├── DataKit/                DTOs, TMDB client, repository implementations, error mapping, SwiftData cache
 │       └── DomainKitTestSupport/   domain fixtures and stubs for the -App test targets
 ├── PresentationKit/                (local Swift package, iOS only)
-│   └── Sources/                    the cell, the grid, the toast and the formatting the UIKit apps share
+│   └── Sources/                    the cell, the grid, the toast, the formatting and the view state the UIKit apps share
 ├── MVC-App/
 ├── MVP-App/
 ├── MVVM-App/                       ┐

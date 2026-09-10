@@ -181,7 +181,7 @@ final class MovieDetailsViewController: UIViewController {
     }
 
     private func render() {
-        apply(Model(movie: movie, details: loadedDetails, imageURLBuilder: imageURLBuilder))
+        apply(MovieDetailsModel(movie: movie, details: loadedDetails, imageURLBuilder: imageURLBuilder))
 
         // Additive, never a screen-wide overlay: the seeded content stays on
         // screen while the rest loads or fails.
@@ -197,7 +197,7 @@ final class MovieDetailsViewController: UIViewController {
         }
     }
 
-    private func apply(_ model: Model) {
+    private func apply(_ model: MovieDetailsModel) {
         backdropView.url = model.backdropURL
         backdropView.isHidden = model.backdropURL == nil
         posterView.url = model.posterURL
@@ -208,8 +208,7 @@ final class MovieDetailsViewController: UIViewController {
 
         titleLabel.text = model.title
         set(originalTitleLabel, model.originalTitle)
-        set(metadataLabel, [model.year, model.runtime, model.rating].compactMap { $0 }
-            .joined(separator: " · ").nilWhenEmpty)
+        set(metadataLabel, model.metadata)
         set(genresLabel, model.genres)
         set(taglineLabel, model.tagline)
         set(overviewLabel, model.overview)
@@ -339,8 +338,4 @@ extension MovieDetailsViewController: YTPlayerViewDelegate {
     func playerViewPreferredWebViewBackgroundColor(_ playerView: YTPlayerView) -> UIColor {
         .systemBackground
     }
-}
-
-private extension String {
-    var nilWhenEmpty: String? { isEmpty ? nil : self }
 }

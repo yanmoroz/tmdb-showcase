@@ -8,7 +8,7 @@ import PresentationKit
 @MainActor
 @Suite("WatchlistViewController")
 final class WatchlistViewControllerTests {
-    private weak var trackedSUT: WatchlistViewController?
+    nonisolated(unsafe) private weak var trackedSUT: WatchlistViewController?
     private var trackedLocation: SourceLocation?
 
     private let removeFromWatchlist = RemoveFromWatchlistStub()

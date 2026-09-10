@@ -10,7 +10,11 @@ import PresentationKit
 final class MoviesViewControllerTests {
     /// Swift Testing builds one suite instance per test, so `deinit` works as
     /// teardown: by then the test's own local references are gone.
-    private weak var trackedSUT: MoviesViewController?
+    ///
+    /// `nonisolated(unsafe)`: `deinit` runs off the main actor, and loading a weak
+    /// reference is safe from any thread. `isolated deinit` would silence the
+    /// warning too, but it runs once the test is over, so a leak fails no test.
+    nonisolated(unsafe) private weak var trackedSUT: MoviesViewController?
     private var trackedLocation: SourceLocation?
 
     /// Held on the suite rather than returned from `makeSUT`: Swift Testing

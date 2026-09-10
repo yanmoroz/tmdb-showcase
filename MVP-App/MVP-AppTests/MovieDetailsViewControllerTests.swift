@@ -10,7 +10,7 @@ import PresentationKit
 @MainActor
 @Suite("MovieDetailsViewController")
 final class MovieDetailsViewControllerTests {
-    private weak var trackedSUT: MovieDetailsViewController?
+    nonisolated(unsafe) private weak var trackedSUT: MovieDetailsViewController?
     private var trackedLocation: SourceLocation?
 
     deinit {
@@ -157,7 +157,9 @@ final class MovieDetailsViewControllerTests {
             originalTitle: nil,
             tagline: nil,
             genres: nil,
-            metadata: "2024 · ★ 7.5",
+            year: "2024",
+            runtime: nil,
+            rating: "★ 7.5",
             overview: overview,
             trailerKey: nil
         )

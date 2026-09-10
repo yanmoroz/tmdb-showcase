@@ -10,7 +10,7 @@ import PresentationKit
 @MainActor
 @Suite("MoviesFilterViewController")
 final class MoviesFilterViewControllerTests {
-    private weak var trackedSUT: MoviesFilterViewController?
+    nonisolated(unsafe) private weak var trackedSUT: MoviesFilterViewController?
     private var trackedLocation: SourceLocation?
 
     deinit {

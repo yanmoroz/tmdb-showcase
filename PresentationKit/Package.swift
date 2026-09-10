@@ -31,7 +31,11 @@ let package = Package(
         ),
         .testTarget(
             name: "PresentationKitTests",
-            dependencies: ["PresentationKit"]
+            dependencies: [
+                "PresentationKit",
+                .product(name: "DomainKit", package: "SharedKit"),
+                .product(name: "DomainKitTestSupport", package: "SharedKit"),
+            ]
         ),
     ],
     swiftLanguageModes: [.v6]

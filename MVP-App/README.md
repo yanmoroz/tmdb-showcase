@@ -44,13 +44,12 @@ MVP-App/
 │   │   ├── MoviesPresenter.swift
 │   │   ├── MoviesFeed.swift
 │   │   ├── MoviesFilterViewController.swift
-│   │   ├── MoviesFilterView.swift   plus FilterRow, a title and a tick
+│   │   ├── MoviesFilterView.swift
 │   │   └── MoviesFilterPresenter.swift
 │   ├── MovieDetails/
 │   │   ├── MovieDetailsViewController.swift
 │   │   ├── MovieDetailsView.swift
-│   │   ├── MovieDetailsPresenter.swift
-│   │   └── MovieDetailsModel.swift  the projection, seed plus what loaded
+│   │   └── MovieDetailsPresenter.swift
 │   ├── Watchlist/
 │   │   ├── WatchlistViewController.swift
 │   │   ├── WatchlistView.swift
@@ -74,7 +73,7 @@ MVP-App/
 feed, the paging cursor, both inputs and the in-flight `Task`; the controller owns
 the collection view and holds none of them.
 
-Three points are worth knowing before reading the code:
+Worth knowing before reading the code:
 
 - **`lastVisibleItem() -> Int?` is the one question among the commands.** After a page
   lands the presenter has to know whether the reader is already at the bottom:
@@ -95,10 +94,6 @@ Three points are worth knowing before reading the code:
   builds, launches and never draws. `CompositionRoot` keeps that ritual in one method
   per screen and `CompositionRootTests` asserts each one happened. MVC-App needs
   neither.
-- **The presenter joins display strings.** `MovieDetailsModel` carries one
-  `metadata` field — "2026 · 2h 25m · ★ 7.9" — where MVC-App's model keeps year,
-  runtime and rating apart and the controller joins them. Choosing a separator is not
-  the view's decision.
 - **The filter sheet sends whole sections, not row deltas.** MVC reloads the two rows
   whose tick moved; here the presenter re-sends the rows and the controller reloads the
   section. At twenty rows with `.none` animation the difference is invisible, and the

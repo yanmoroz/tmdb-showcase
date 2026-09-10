@@ -1,40 +1,65 @@
 import Foundation
 import DomainKit
-import PresentationKit
 
-/// Everything the screen draws, flat and already formatted.
+/// Everything the details screen draws, flat and already formatted.
 ///
 /// A pure projection of the seed plus whatever has loaded. The rules about which
 /// fields count as absent live here, where they can be tested without standing a
 /// view up.
-struct MovieDetailsModel: Equatable {
-    let title: String
-    let posterURL: URL?
-    let backdropURL: URL?
-    let originalTitle: String?
-    let tagline: String?
-    let genres: String?
-    /// Year, runtime and rating already joined: choosing the separator is not
-    /// the view's decision. MVC-App leaves the three apart and joins them in the
-    /// controller.
-    let metadata: String?
-    let overview: String?
+public struct MovieDetailsModel: Equatable {
+    public let title: String
+    public let posterURL: URL?
+    public let backdropURL: URL?
+    public let originalTitle: String?
+    public let tagline: String?
+    public let genres: String?
+    public let year: String?
+    public let runtime: String?
+    public let rating: String?
+    public let overview: String?
     /// The YouTube id, not a URL: the player takes an id.
-    let trailerKey: String?
+    public let trailerKey: String?
+
+    public init(
+        title: String,
+        posterURL: URL?,
+        backdropURL: URL?,
+        originalTitle: String?,
+        tagline: String?,
+        genres: String?,
+        year: String?,
+        runtime: String?,
+        rating: String?,
+        overview: String?,
+        trailerKey: String?
+    ) {
+        self.title = title
+        self.posterURL = posterURL
+        self.backdropURL = backdropURL
+        self.originalTitle = originalTitle
+        self.tagline = tagline
+        self.genres = genres
+        self.year = year
+        self.runtime = runtime
+        self.rating = rating
+        self.overview = overview
+        self.trailerKey = trailerKey
+    }
+
+    /// Year, runtime and rating on one line, or nil when none of them is known.
+    public var metadata: String? {
+        let parts = [year, runtime, rating].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
 }
 
 extension MovieDetailsModel {
     /// Loaded details win, the seed fills the gaps — so nothing already on
     /// screen can vanish when the request lands, and nothing waits for it that
     /// the list already knew.
-    init(movie: Movie, details: MovieDetails?, imageURLBuilder: any MovieImageURLBuilder) {
+    public init(movie: Movie, details: MovieDetails?, imageURLBuilder: any MovieImageURLBuilder) {
         let card = details.map { Card($0) } ?? Card(movie)
         let genreNames = (details?.genres ?? []).map(\.name)
-        let metadata = [
-            MovieFormatting.year(card.releaseDate),
-            MovieFormatting.runtime(minutes: details?.runtime),
-            MovieFormatting.rating(average: card.voteAverage, count: card.voteCount),
-        ].compactMap { $0 }
 
         self.init(
             title: card.title,
@@ -45,7 +70,9 @@ extension MovieDetailsModel {
             originalTitle: details.flatMap { $0.originalTitle == $0.title ? nil : $0.originalTitle },
             tagline: details?.tagline,
             genres: genreNames.isEmpty ? nil : genreNames.joined(separator: ", "),
-            metadata: metadata.isEmpty ? nil : metadata.joined(separator: " · "),
+            year: MovieFormatting.year(card.releaseDate),
+            runtime: MovieFormatting.runtime(minutes: details?.runtime),
+            rating: MovieFormatting.rating(average: card.voteAverage, count: card.voteCount),
             // Not optional in the domain, but TMDB sends "" for a missing one.
             overview: card.overview.isEmpty ? nil : card.overview,
             trailerKey: details?.trailer?.youtubeKey
