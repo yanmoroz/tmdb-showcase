@@ -64,10 +64,6 @@ final class MoviesPresenter {
         self.searchDebouncer = Debouncer(interval: searchDebounce)
     }
 
-    func didApplyFilter(_ filter: MoviesFilter) {
-        self.filter = filter
-    }
-
     // MARK: - Watchlist
 
     private func setSaved(_ isSaved: Bool, for id: Movie.ID) {
@@ -244,7 +240,7 @@ extension MoviesPresenter: MoviesViewOutput {
     }
 
     func didTapFilter() {
-        router.showFilter(filter)
+        router.showFilter(filter, output: self)
     }
 
     func didPullToRefresh() {
@@ -294,5 +290,13 @@ extension MoviesPresenter: MoviesInteractorOutput {
     func didFailToSetSaved(_ isSaved: Bool, for id: Movie.ID, with error: AppError) {
         setSaved(!isSaved, for: id)
         view?.showToast(error.message)
+    }
+}
+
+// MARK: - MoviesFilterModuleOutput
+
+extension MoviesPresenter: MoviesFilterModuleOutput {
+    func didApplyFilter(_ filter: MoviesFilter) {
+        self.filter = filter
     }
 }

@@ -322,6 +322,7 @@ final class MoviesPresenterTests {
         sut.didTapFilter()
 
         #expect(router.shownFilters == [MoviesFilter(genreID: 28, sort: .ratingDescending)])
+        #expect(router.lastFilterOutput === sut)
     }
 
     @Test("Choosing Trending asks for the trending feed")
@@ -553,10 +554,13 @@ final class MoviesInteractorSpy: MoviesInteractorInput {
 @MainActor
 final class MoviesRouterSpy: MoviesRouterInput {
     private(set) var shownFilters: [MoviesFilter] = []
+    /// `weak`: the output is the presenter under test, which holds this spy.
+    private(set) weak var lastFilterOutput: (any MoviesFilterModuleOutput)?
     private(set) var shownDetails: [Movie] = []
 
-    func showFilter(_ selection: MoviesFilter) {
+    func showFilter(_ selection: MoviesFilter, output: any MoviesFilterModuleOutput) {
         shownFilters.append(selection)
+        lastFilterOutput = output
     }
 
     func showDetails(for movie: Movie) {

@@ -31,6 +31,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let configuration = AppConfig.tmdb
 
         var movies: any MoviesRepository = TMDBMoviesRepository(configuration: configuration)
+        var genres: any GenresRepository = TMDBGenresRepository(configuration: configuration)
 
         // Unlike the cache, a watchlist that will not open is not something to
         // run silently without: the stand-in reports the failure when the reader
@@ -44,10 +45,12 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // not running at all.
         if let cache = MovieCache() {
             movies = CachingMoviesRepository(wrapping: movies, cache: cache)
+            genres = CachingGenresRepository(wrapping: genres, cache: cache)
         }
 
         return CompositionRoot.makeMovies(
             movies: movies,
+            genres: genres,
             watchlist: watchlist,
             imageURLBuilder: TMDBImageURLBuilder(configuration: configuration)
         )

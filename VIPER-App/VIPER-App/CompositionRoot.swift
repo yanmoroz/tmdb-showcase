@@ -1,7 +1,7 @@
 import DomainKit
 import UIKit
 
-/// Where the modules are assembled.
+/// Where the root module is assembled; each router builds the modules it leads to.
 ///
 /// A named type rather than a method on the scene delegate, for the reason
 /// MVC-App gives: it takes repositories rather than building them, so opening a
@@ -15,6 +15,7 @@ import UIKit
 enum CompositionRoot {
     static func makeMovies(
         movies: any MoviesRepository,
+        genres: any GenresRepository,
         watchlist: any WatchlistRepository,
         imageURLBuilder: any MovieImageURLBuilder
     ) -> UINavigationController {
@@ -24,7 +25,7 @@ enum CompositionRoot {
             addToWatchlist: AddToWatchlist(repository: watchlist),
             removeFromWatchlist: RemoveFromWatchlist(repository: watchlist)
         )
-        let router = MoviesRouter()
+        let router = MoviesRouter(genres: genres)
         let presenter = MoviesPresenter(
             interactor: interactor,
             router: router,

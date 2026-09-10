@@ -29,6 +29,30 @@ func drainPendingWork(iterations: Int = 10) async {
     }
 }
 
+/// Records presentation instead of performing it, so a router can be tested
+/// without a window to present in.
+@MainActor
+final class PresentingViewControllerSpy: UIViewController {
+    private(set) var presented: [UIViewController] = []
+    private(set) var dismissCount = 0
+
+    override var presentedViewController: UIViewController? {
+        presented.last
+    }
+
+    override func present(
+        _ viewControllerToPresent: UIViewController,
+        animated flag: Bool,
+        completion: (() -> Void)? = nil
+    ) {
+        presented.append(viewControllerToPresent)
+    }
+
+    override func dismiss(animated flag: Bool, completion: (() -> Void)? = nil) {
+        dismissCount += 1
+    }
+}
+
 /// The controller builds its hierarchy in code and exposes none of it, so tests
 /// reach a view by walking down from the root.
 extension UIView {

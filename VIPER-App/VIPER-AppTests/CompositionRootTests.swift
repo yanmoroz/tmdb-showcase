@@ -50,6 +50,7 @@ struct CompositionRootTests {
     private func makeMovies(page: Page<Movie> = .empty()) -> UINavigationController {
         CompositionRoot.makeMovies(
             movies: MoviesRepositoryStub(moviesResult: .success(page)),
+            genres: GenresRepositoryStub(),
             watchlist: UnavailableWatchlistRepository(),
             imageURLBuilder: MovieImageURLBuilderStub()
         )
