@@ -10,6 +10,28 @@ import DataKit
 @MainActor
 @Suite("CompositionRoot")
 struct CompositionRootTests {
+    // MARK: - Tabs
+
+    @Test("Both tabs get their own navigation stack")
+    func tabsGetTheirOwnStacks() {
+        let tabBar = makeTabBar()
+
+        #expect(tabBar.viewControllers?.count == 2)
+        #expect(tabBar.viewControllers?.allSatisfy { $0 is UINavigationController } == true)
+    }
+
+    @Test("The tabs are Movies and Watchlist, in that order")
+    func tabsAreInOrder() {
+        let tabBar = makeTabBar()
+        let roots = tabBar.viewControllers?.compactMap { ($0 as? UINavigationController)?.viewControllers.first }
+
+        #expect(roots?.first is MoviesViewController)
+        #expect(roots?.last is WatchlistViewController)
+        #expect(tabBar.viewControllers?.map(\.tabBarItem.title) == ["Movies", "Watchlist"])
+    }
+
+    // MARK: - Movies
+
     /// Each of these is `weak` and assigned once every object exists, so each is
     /// one forgotten line away from a module that builds and silently does nothing.
     @Test("The movies module is wired every way")
@@ -33,8 +55,8 @@ struct CompositionRootTests {
         #expect(navigation.viewControllers.first is MoviesViewController)
     }
 
-    /// The only test where the real interactor answers the real presenter: the
-    /// loading flag set on the way out has to clear on the way back.
+    /// The real interactor answering the real presenter: the loading flag set on
+    /// the way out has to clear on the way back.
     @Test("A page travels the whole module to the screen")
     func pageTravelsTheWholeModule() async throws {
         let navigation = makeMovies(page: .fixture(items: Movie.fixtures(count: 3)))
@@ -59,7 +81,43 @@ struct CompositionRootTests {
         try await waitUntil { navigation.viewControllers.last is MovieDetailsViewController }
     }
 
+    // MARK: - Watchlist
+
+    @Test("The watchlist module is wired every way")
+    func watchlistIsWiredEveryWay() throws {
+        let navigation = makeWatchlist()
+        let view = try #require(navigation.viewControllers.first as? WatchlistViewController)
+        let presenter = try #require(view.presenter as? WatchlistPresenter)
+        let interactor = try #require(presenter.interactor as? WatchlistInteractor)
+        let router = try #require(presenter.router as? WatchlistRouter)
+
+        #expect(presenter.view === view)
+        #expect(interactor.output === presenter)
+        #expect(router.viewController === view)
+    }
+
+    @Test("Saved films travel the whole module to the screen")
+    func savedFilmsTravelTheWholeModule() async throws {
+        let navigation = makeWatchlist(saved: Movie.fixtures(count: 2))
+        let view = try #require(navigation.viewControllers.first as? WatchlistViewController)
+
+        view.loadViewIfNeeded()
+        view.beginAppearanceTransition(true, animated: false)
+        view.endAppearanceTransition()
+
+        try await waitUntil { view.testItemCount == 2 && !view.testShowsOverlay }
+    }
+
     // MARK: - Helpers
+
+    private func makeTabBar() -> UITabBarController {
+        CompositionRoot.makeTabBar(
+            movies: MoviesRepositoryStub(),
+            genres: GenresRepositoryStub(),
+            watchlist: UnavailableWatchlistRepository(),
+            imageURLBuilder: MovieImageURLBuilderStub()
+        )
+    }
 
     private func makeMovies(page: Page<Movie> = .empty()) -> UINavigationController {
         CompositionRoot.makeMovies(
@@ -69,12 +127,20 @@ struct CompositionRootTests {
             imageURLBuilder: MovieImageURLBuilderStub()
         )
     }
+
+    private func makeWatchlist(saved: [Movie] = []) -> UINavigationController {
+        CompositionRoot.makeWatchlist(
+            movies: MoviesRepositoryStub(),
+            watchlist: WatchlistRepositoryStub(savedMoviesResult: .success(saved)),
+            imageURLBuilder: MovieImageURLBuilderStub()
+        )
+    }
 }
 
 // MARK: - Scaffolding
 
 @MainActor
-private extension MoviesViewController {
+private extension UIViewController {
     var testItemCount: Int {
         autoreleasepool {
             view.firstSubview(of: UICollectionView.self)?.numberOfItems(inSection: 0) ?? 0

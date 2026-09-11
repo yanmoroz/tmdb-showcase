@@ -9,7 +9,7 @@ One application implemented six times, each on a different UI architecture.
 | 1   | MVC                               | ✅ done         |
 | 2   | MVP                               | ✅ done         |
 | 3   | MVVM                              | ⏳ not started  |
-| 4   | VIPER                             | ⏳ not started  |
+| 4   | VIPER                             | ✅ done         |
 | 5   | VIP (Clean Swift)                 | ⏳ not started  |
 | 6   | TCA (The Composable Architecture) | ⏳ not started  |
 
@@ -104,7 +104,15 @@ compared directly. Each screen is a presenter owning the state and a passive vie
 obeying a protocol of commands, and the views themselves are shared through
 `PresentationKit` — a poster cell is not an architectural choice. What that buys shows
 up in the tests: MVP's presenter suites cover what MVC's controller suites cover while
-standing up no `UIView` at all. Next: the remaining four architectures.
+standing up no `UIView` at all.
+
+`VIPER-App` does the same four screens once more, with each presenter split three ways:
+an interactor that owns the use cases and the request in flight, a presenter that owns
+what is shown, and a router that builds and presents whatever a screen opens. The tests
+make the price visible — the loading flag no longer carries its `Task`, and every module
+has up to three `weak` back-references that fail silently if forgotten — and one gain:
+with the interactor faked, the presenter suites run synchronously. Next: the remaining
+three architectures.
 
 ## Setting up
 

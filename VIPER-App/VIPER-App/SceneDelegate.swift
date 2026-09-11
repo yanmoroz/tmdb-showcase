@@ -48,7 +48,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             genres = CachingGenresRepository(wrapping: genres, cache: cache)
         }
 
-        return CompositionRoot.makeMovies(
+        return CompositionRoot.makeTabBar(
             movies: movies,
             genres: genres,
             watchlist: watchlist,

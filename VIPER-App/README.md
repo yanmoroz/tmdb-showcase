@@ -36,7 +36,7 @@ VIPER-App/
 ├── VIPER-App/
 │   ├── AppDelegate.swift
 │   ├── SceneDelegate.swift              window; opens the stores
-│   ├── CompositionRoot.swift            assembles the root module
+│   ├── CompositionRoot.swift            assembles the tab bar and both root modules
 │   ├── AppConfig.swift                  reads the TMDB token from Info.plist
 │   ├── Movies/
 │   │   ├── MoviesViewController.swift
@@ -57,6 +57,12 @@ VIPER-App/
 │   │   ├── MovieDetailsPresenter.swift
 │   │   ├── MovieDetailsInteractor.swift
 │   │   └── MovieDetailsRouter.swift     assembles the card; nothing to route
+│   ├── Watchlist/
+│   │   ├── WatchlistViewController.swift
+│   │   ├── WatchlistView.swift
+│   │   ├── WatchlistPresenter.swift
+│   │   ├── WatchlistInteractor.swift
+│   │   └── WatchlistRouter.swift        pushes the card from the second tab
 │   ├── Info.plist
 │   └── Assets.xcassets
 └── VIPER-AppTests/
@@ -74,9 +80,9 @@ A screen is four objects behind five protocols. The controller knows the present
 
 Worth knowing before reading the code:
 
-- **Up to three back-references are `weak` and assigned after construction** — `presenter.view`, `interactor.output`, `router.viewController`. Each one forgotten leaves a module that builds and silently does nothing, so every module is assembled in exactly one place — `CompositionRoot` for the root, the module's own `makeModule` otherwise — and a test checks each. MVP-App has one such reference.
-- **Loading has two sources of truth.** The interactor owns the request; the presenter keeps a flag for the overlay and for pagination. MVP-App keeps the `Task` inside `Activity.loading`, which makes "loading with nothing in flight" unrepresentable; here only `loadPage`'s contract prevents it — starting a load abandons the one in flight, whose result is never reported, and every other load reports exactly once. The presenter suite pins the flag's half, the interactor suite the request's. The filter sheet and the details card repeat the arrangement.
-- **Routers build what they open.** `MoviesRouter` calls the sheet's and the card's `makeModule` and presents or pushes the result, so it holds the movies, genres and watchlist repositories and the image URL builder for that alone: every dependency of every screen it opens passes through it. In MVP-App the same dependencies sat in `CompositionRoot` closures the controller only called.
+- **Up to three back-references are `weak` and assigned after construction** — `presenter.view`, `interactor.output`, `router.viewController`. Each one forgotten leaves a module that builds and silently does nothing, so every module is assembled in exactly one place — `CompositionRoot` for the two tabs, the module's own `makeModule` otherwise — and a test checks each. MVP-App has one such reference.
+- **Loading has two sources of truth.** The interactor owns the request; the presenter keeps a flag for the overlay and for pagination. MVP-App keeps the `Task` inside `Activity.loading`, which makes "loading with nothing in flight" unrepresentable; here only `loadPage`'s contract prevents it — starting a load abandons the one in flight, whose result is never reported, and every other load reports exactly once. The presenter suite pins the flag's half, the interactor suite the request's. The filter sheet, the details card and the watchlist repeat the arrangement.
+- **Routers build what they open.** `MoviesRouter` calls the sheet's and the card's `makeModule` and presents or pushes the result, so it holds the movies, genres and watchlist repositories and the image URL builder for that alone: every dependency of every screen it opens passes through it. `WatchlistRouter` repeats the push to the card for the second tab. In MVP-App the same dependencies sat in `CompositionRoot` closures the controller only called.
 - **A module reports back through a protocol.** The sheet hands its selection to `MoviesFilterModuleOutput`, which the movies presenter implements. It is `weak` but passed through `init`, so unlike the three above it cannot be forgotten.
 - **The presenter suites are synchronous.** With the interactor faked, a test calls the output methods itself; only the movies search debounce is still waited for.
 - **Views neither route nor dismiss.** `showFilter`, `showDetails` and the sheet's `dismiss` moved from the view protocols to the routers.
@@ -86,4 +92,8 @@ Worth knowing before reading the code:
 
 The movies list is in: poster grid, pagination, loading / empty / failure states, pull-to-refresh, search with debounce, Popular/Trending, and bookmarking with an optimistic mark that rolls back on a failed write. The genre and sort sheet is in, owning the genre catalogue so nobody pays for that request unless it is opened.
 
-The details card is in: seeded from the `Movie` the list already holds, so it is never blank, with the loaded fields, the trailer and a bookmark arriving after. A failure sits beside the card rather than over it. Next: the Watchlist tab.
+The details card is in: seeded from the `Movie` the list already holds, so it is never blank, with the loaded fields, the trailer and a bookmark arriving after. A failure sits beside the card rather than over it.
+
+The Watchlist tab is in, on the same grid and cell as the movies list. Everything listed there is saved, so every bookmark is filled and tapping one un-saves — and the row stays put until the next appearance, which undoes a mis-tap in place and avoids reconciling a delete against a grid being scrolled. Both list screens re-read on `viewWillAppear`, because nothing here observes anything.
+
+All four screens are done. Next: the remaining three architectures.
