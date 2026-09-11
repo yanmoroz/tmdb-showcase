@@ -35,8 +35,16 @@ VIP-App/
 ├── VIP-App.xcodeproj
 ├── VIP-App/
 │   ├── AppDelegate.swift
-│   ├── SceneDelegate.swift          window
-│   ├── AppConfig.swift              reads the TMDB token from Info.plist
+│   ├── SceneDelegate.swift              window; opens the stores
+│   ├── CompositionRoot.swift            assembles each scene
+│   ├── AppConfig.swift                  reads the TMDB token from Info.plist
+│   ├── Movies/
+│   │   ├── MoviesViewController.swift   and its display logic
+│   │   ├── MoviesInteractor.swift       and its business logic and data store
+│   │   ├── MoviesPresenter.swift        and its presentation logic
+│   │   ├── MoviesRouter.swift           and its routing logic and data passing
+│   │   ├── MoviesModels.swift           every request, response and view model
+│   │   └── MoviesFeed.swift
 │   ├── Info.plist
 │   └── Assets.xcassets
 └── VIP-AppTests/
@@ -48,6 +56,20 @@ VIP-App/
 2. Open `TMDB-Showcase.xcworkspace`
 3. Scheme `VIP-App`, an iOS 17+ simulator
 
+## The scene
+
+A screen is four objects behind six protocols, and every call between them carries a type from `MoviesModels`. The flow goes one way: the controller sends a request through `MoviesBusinessLogic`, the interactor hands a response through `MoviesPresentationLogic`, the presenter hands a view model through `MoviesDisplayLogic`. The controller owns the interactor and the router; the interactor owns the presenter; the router holds the interactor as its `MoviesDataStore`.
+
+Worth knowing before reading the code:
+
+- **Two back-references are `weak` and assigned after construction** — `presenter.viewController`, `router.viewController`. Everything else goes through `init`. `CompositionRoot` assigns both in one place and `CompositionRootTests` checks each. VIPER-App has three per module, MVP-App one.
+- **The interactor owns state and the request together**, so `Activity.loading` carries its `Task` as in MVP-App. VIPER-App's `loadPage` contract has no counterpart here.
+- **The presenter stores nothing** but the way back to the view, and its suite is synchronous. Pagination, search, filter and rollback are tested in the interactor suite, next to the use cases they await, which polls as MVP-App's presenter suite does.
+- **The interactor is the data store.** `filter` and `selectedMovie` sit in `MoviesDataStore` for the router to read.
+- **Nothing asks what is on screen.** `reloadData` re-displays the visible cells at the next layout and `willDisplay` sends each of them again, which keeps a reader already at the bottom paginating. There is no `lastVisibleItem()`.
+- **The controller holds its router as `MoviesRoutingLogic` only.** `MoviesDataPassing` is for other routers.
+- **Models are grouped by role** — `MoviesModels.Request`, `.Response`, `.ViewModel` — not by use case as in the Clean Swift templates. `start` alone leads to five responses, and `Feed` is reported for seven different causes.
+
 ## Status
 
-Scaffolding only: build settings, the token path and the package links match [MVC-App](../MVC-App/README.md), [MVP-App](../MVP-App/README.md) and [VIPER-App](../VIPER-App/README.md). No screens yet — `SceneDelegate` installs a bare `UIViewController`.
+The movies list is in: poster grid, pagination, loading / empty / failure states, pull-to-refresh, search with debounce, Popular/Trending, and bookmarking with an optimistic mark that rolls back on a failed write. The filter sheet and the details screen come next; until they land, the router's two routes do nothing.
