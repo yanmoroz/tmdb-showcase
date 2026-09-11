@@ -63,8 +63,8 @@ TMDB-Showcase.xcworkspace
 ├── MVC-App/
 ├── MVP-App/
 ├── VIPER-App/
-├── MVVM-App/                       ┐
-├── VIP-App/                        ├ planned, not in the repository yet
+├── VIP-App/
+├── MVVM-App/                       ┐ planned, not in the repository yet
 └── TCA-App/                        ┘
 ```
 
