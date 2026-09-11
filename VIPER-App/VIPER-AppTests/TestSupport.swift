@@ -53,6 +53,15 @@ final class PresentingViewControllerSpy: UIViewController {
     }
 }
 
+/// Pushes without animation, so a test can read the stack as soon as a router
+/// has pushed onto it.
+@MainActor
+final class ImmediateNavigationController: UINavigationController {
+    override func pushViewController(_ viewController: UIViewController, animated: Bool) {
+        super.pushViewController(viewController, animated: false)
+    }
+}
+
 /// The controller builds its hierarchy in code and exposes none of it, so tests
 /// reach a view by walking down from the root.
 extension UIView {
@@ -60,6 +69,16 @@ extension UIView {
         if let match = self as? T { return match }
         for subview in subviews {
             if let found = subview.firstSubview(of: type) { return found }
+        }
+        return nil
+    }
+
+    /// `firstSubview(of:)` returns whichever match comes first, which cannot tell
+    /// one label from another on a screen made mostly of labels.
+    func firstSubview<T: UIView>(of type: T.Type, identifier: String) -> T? {
+        if let match = self as? T, accessibilityIdentifier == identifier { return match }
+        for subview in subviews {
+            if let found = subview.firstSubview(of: type, identifier: identifier) { return found }
         }
         return nil
     }

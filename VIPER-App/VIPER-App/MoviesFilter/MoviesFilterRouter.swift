@@ -20,11 +20,11 @@ final class MoviesFilterRouter: MoviesFilterRouterInput {
 
     /// Assembles the sheet; the router that opens it decides how it appears.
     static func makeModule(
-        fetchGenres: any FetchGenresUseCase,
+        genres: any GenresRepository,
         selection: MoviesFilter,
         output: any MoviesFilterModuleOutput
     ) -> MoviesFilterViewController {
-        let interactor = MoviesFilterInteractor(fetchGenres: fetchGenres)
+        let interactor = MoviesFilterInteractor(fetchGenres: FetchGenres(repository: genres))
         let router = MoviesFilterRouter()
         let presenter = MoviesFilterPresenter(
             interactor: interactor,

@@ -8,10 +8,11 @@ import UIKit
 /// store stays the scene delegate's business and this can be exercised without
 /// touching the disk.
 ///
-/// A module is a view, a presenter, an interactor and a router, held together by
-/// three `weak` back-references — `presenter.view`, `interactor.output` and
-/// `router.viewController`. Each fails silently if forgotten: the screen builds
-/// and launches, then never draws, never hears back, or never leads anywhere.
+/// A module is a view, a presenter, an interactor and — when it leads anywhere —
+/// a router, held together by `weak` back-references: `presenter.view`,
+/// `interactor.output` and `router.viewController`. Each fails silently if
+/// forgotten: the screen builds and launches, then never draws, never hears
+/// back, or never leads anywhere.
 enum CompositionRoot {
     static func makeMovies(
         movies: any MoviesRepository,
@@ -25,7 +26,12 @@ enum CompositionRoot {
             addToWatchlist: AddToWatchlist(repository: watchlist),
             removeFromWatchlist: RemoveFromWatchlist(repository: watchlist)
         )
-        let router = MoviesRouter(genres: genres)
+        let router = MoviesRouter(
+            movies: movies,
+            genres: genres,
+            watchlist: watchlist,
+            imageURLBuilder: imageURLBuilder
+        )
         let presenter = MoviesPresenter(
             interactor: interactor,
             router: router,

@@ -13,7 +13,7 @@ struct MoviesFilterRouterTests {
     @Test("The filter module is wired every way")
     func moduleIsWiredEveryWay() throws {
         let view = MoviesFilterRouter.makeModule(
-            fetchGenres: FetchGenresStub(),
+            genres: GenresRepositoryStub(),
             selection: MoviesFilter(),
             output: MoviesFilterModuleOutputSpy()
         )
@@ -31,7 +31,7 @@ struct MoviesFilterRouterTests {
         let output = MoviesFilterModuleOutputSpy()
         let selection = MoviesFilter(genreID: 28, sort: .ratingDescending)
         let view = MoviesFilterRouter.makeModule(
-            fetchGenres: FetchGenresStub(),
+            genres: GenresRepositoryStub(),
             selection: selection,
             output: output
         )

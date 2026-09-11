@@ -45,6 +45,20 @@ struct CompositionRootTests {
         try await waitUntil { view.testItemCount == 3 && !view.testShowsOverlay }
     }
 
+    /// The router's `viewController` is otherwise only checked for identity; this
+    /// walks the whole path from a tap to a pushed screen.
+    @Test("Selecting a loaded film pushes its details onto the movies stack")
+    func selectionPushesDetails() async throws {
+        let navigation = makeMovies(page: .fixture(items: Movie.fixtures(count: 3)))
+        let view = try #require(navigation.viewControllers.first as? MoviesViewController)
+
+        view.loadViewIfNeeded()
+        try await waitUntil { view.testItemCount == 3 }
+        view.presenter.didSelectItem(at: 1)
+
+        try await waitUntil { navigation.viewControllers.last is MovieDetailsViewController }
+    }
+
     // MARK: - Helpers
 
     private func makeMovies(page: Page<Movie> = .empty()) -> UINavigationController {
